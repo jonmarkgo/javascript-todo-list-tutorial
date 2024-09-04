@@ -10,6 +10,7 @@
   },
   "author": "@dwyl & friends!",
   "devDependencies": {
+    "@types/node": "^22.5.3",
     "decache": "^4.6.0",
     "jsdom": "^24.0.0",
     "jsdom-global": "^3.0.2",
@@ -17,15 +18,17 @@
     "nyc": "^15.1.0",
     "pre-commit": "^1.2.2",
     "tap-nyc": "^1.0.3",
-    "tape": "^5.0.1"
+    "tape": "^5.0.1",
+    "typescript": "^5.5.4",
+    "ts-node": "^10.9.1"
   },
   "scripts": {
     "check-coverage": "nyc check-coverage --statements 100 --functions 100 --lines 100 --branches 100",
     "postinstall": "npm test",
-    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
-    "start": "node lib/server.js",
+    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.ts",
+    "start": "ts-node lib/server.ts",
     "dev": "live-server",
-    "test": "nyc tape ./test/*.test.js | tap-nyc"
+    "test": "nyc tape ./test/*.test.ts | tap-nyc"
   },
   "keywords": [
     "Todo List",
