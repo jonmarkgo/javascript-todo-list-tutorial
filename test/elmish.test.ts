@@ -1,6 +1,7 @@
 import test, { Test } from 'tape';  // https://github.com/dwyl/learn-tape
 import fs from 'fs';                // read html files (see below)
 import path from 'path';            // so we can open files cross-platform
+import { mount, add_attributes, append_childnodes, section, route, empty } from '../lib/elmish';
 import * as elmish from '../lib/elmish';
 import { JSDOM } from 'jsdom';
 
