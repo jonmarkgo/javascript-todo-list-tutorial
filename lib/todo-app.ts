@@ -1,354 +1,286 @@
-/* if require fn is available, it means we are in Node.js Land i.e. testing! */
-/* istanbul ignore next */
-if (typeof require !== 'undefined' && this.window !== this) {
-  var { a, button, div, empty, footer, input, h1, header, label, li, mount,
-    route, section, span, strong, text, ul } = require('./elmish.js');
+import * as elmish from './elmish';
+
+export interface Todo {
+    id: number;
+    title: string;
+    done: boolean;
 }
 
-var initial_model = {
-  todos: [],
-  hash: "#/"
+export interface Model {
+    todos: Todo[];
+    hash: string;
+    all_done?: boolean;
+    clicked?: number;
+    click_time?: number;
+    editing?: number;
 }
+
+export const initial_model: Model = {
+    todos: [],
+    hash: "#/"
+};
 
 /**
  * `update` transforms the `model` based on the `action`.
- * @param {String} action - the desired action to perform on the model.
- * @param {String} data - the data we want to "apply" to the item.
- * @param {Object} model - the App's (current) model (or "state").
- * @return {Object} new_model - the transformed model.
+ * @param {string} action - the desired action to perform on the model.
+ * @param {Model} model - the App's (current) model (or "state").
+ * @param {any} data - the data we want to "apply" to the item.
+ * @return {Model} new_model - the transformed model.
  */
-function update(action, model, data) {
-  var new_model = JSON.parse(JSON.stringify(model)) // "clone" the model
-
-  switch(action) {
-    case 'ADD':
-      var last = (typeof model.todos !== 'undefined' && model.todos.length > 0)
-        ? model.todos[model.todos.length - 1] : null;
-      var id = last ? last.id + 1 : 1;
-      var input = document.getElementById('new-todo');
-      new_model.todos = (new_model.todos && new_model.todos.length > 0)
-        ? new_model.todos : [];
-      new_model.todos.push({
-        id: id,
-        title: data || input.value.trim(),
-        done: false
-      });
-      break;
-    case 'TOGGLE':
-      new_model.todos.forEach(function (item) { // takes 1ms on a "slow mobile"
-        if(item.id === data) {    // this should only "match" one item.
-          item.done = !item.done; // invert state of "done" e.g false >> true
-        }
-      });
-      // if all todos are done=true then "check" the "toggle-all" checkbox:
-      var all_done = new_model.todos.filter(function(item) {
-        return item.done === false; // only care about items that are NOT done
-      }).length;
-      new_model.all_done = all_done === 0 ? true : false;
-      break;
-    case 'TOGGLE_ALL':
-      new_model.all_done = new_model.all_done ? false : true;
-      new_model.todos.forEach(function (item) { // takes 1ms on a "slow mobile"
-        item.done = new_model.all_done;
-      });
-      break;
-    case 'DELETE':
-      // console.log('DELETE', data);
-      new_model.todos = new_model.todos.filter(function (item) {
-        return item.id !== data;
-      });
-      break;
-    case 'EDIT':
-      // this code is inspired by: https://stackoverflow.com/a/16033129/1148249
-      // simplified as we are not altering the DOM!
-      if (new_model.clicked && new_model.clicked === data &&
-        Date.now() - 300 < new_model.click_time ) { // DOUBLE-CLICK < 300ms
-          new_model.editing = data;
-      }
-      else { // first click
-        new_model.clicked = data; // so we can check if same item clicked twice!
-        new_model.click_time = Date.now(); // timer to detect double-click 300ms
-        new_model.editing = false; // reset
-      }
-      break;
-    case 'SAVE':
-      var edit = document.getElementsByClassName('edit')[0];
-      var value = edit.value;
-      var id = parseInt(edit.id, 10);
-      // End Editing
-      new_model.clicked = false;
-      new_model.editing = false;
-
-      if (!value || value.length === 0) { // delete item if title is blank:
-        return update('DELETE', new_model, id);
-      }
-      // update the value of the item.title that has been edited:
-      new_model.todos = new_model.todos.map(function (item) {
-        if (item.id === id && value && value.length > 0) {
-          item.title = value.trim();
-        }
-        return item; // return all todo items.
-      });
-      break;
-    case 'CANCEL':
-      new_model.clicked = false;
-      new_model.editing = false;
-      break;
-    case 'CLEAR_COMPLETED':
-      new_model.todos = new_model.todos.filter(function (item) {
-        return !item.done; // only return items which are item.done = false
-      });
-      break;
-    case 'ROUTE':
-      new_model.hash = // (window && window.location && window.location.hash) ?
-        window.location.hash // : '#/';
-      break;
-    default: // if action unrecognised or undefined,
-      return model; // return model unmodified
-  }   // see: https://softwareengineering.stackexchange.com/a/201786/211301
-  return new_model;
+export function update(action: string, model: Model, data?: any): Model {
+    const new_model: Model = JSON.parse(JSON.stringify(model)); // "clone" the model
+    switch (action) {
+        case 'ADD':
+            const last = (model.todos.length > 0) ? model.todos[model.todos.length - 1] : null;
+            const id = last ? last.id + 1 : 1;
+            const input = document.getElementById('new-todo') as HTMLInputElement;
+            new_model.todos.push({
+                id: id,
+                title: data || input.value.trim(),
+                done: false
+            });
+            break;
+        case 'TOGGLE':
+            new_model.todos = new_model.todos.map(item => item.id === data ? { ...item, done: !item.done } : item);
+            new_model.all_done = new_model.todos.every(item => item.done);
+            break;
+        case 'TOGGLE_ALL':
+            new_model.all_done = !new_model.all_done;
+            new_model.todos = new_model.todos.map(item => ({ ...item, done: new_model.all_done || false }));
+            break;
+        case 'DELETE':
+            new_model.todos = new_model.todos.filter(item => item.id !== data);
+            break;
+        case 'EDIT':
+            if (new_model.clicked === data && Date.now() - (new_model.click_time || 0) < 300) {
+                new_model.editing = data;
+            }
+            else {
+                new_model.clicked = data;
+                new_model.click_time = Date.now();
+                new_model.editing = undefined;
+            }
+            break;
+        case 'SAVE':
+            const edit = document.getElementsByClassName('edit')[0] as HTMLInputElement;
+            const value = edit.value;
+            const editId = parseInt(edit.id, 10);
+            new_model.clicked = undefined;
+            new_model.editing = undefined;
+            if (!value || value.length === 0) {
+                return update('DELETE', new_model, editId);
+            }
+            new_model.todos = new_model.todos.map(item => item.id === editId ? { ...item, title: value.trim() } : item);
+            break;
+        case 'CANCEL':
+            new_model.clicked = undefined;
+            new_model.editing = undefined;
+            break;
+        case 'CLEAR_COMPLETED':
+            new_model.todos = new_model.todos.filter(item => !item.done);
+            break;
+        case 'ROUTE':
+            new_model.hash = window.location.hash;
+            break;
+        default:
+            return model;
+    }
+    return new_model;
 }
 
 /**
- * `render_item` creates an DOM "tree" with a single Todo List Item
+ * `render_item` creates a DOM "tree" with a single Todo List Item
  * using the "elmish" DOM functions (`li`, `div`, `input`, `label` and `button`)
  * returns an `<li>` HTML element with a nested `<div>` which in turn has the:
- * + `<input type=checkbox>` which lets users to "Toggle" the status of the item
+ * + `<input type=checkbox>` which lets users "Toggle" the status of the item
  * + `<label>` which displays the Todo item text (`title`) in a `<text>` node
  * + `<button class="destroy">` lets people "delete" a todo item.
  * see: https://github.com/dwyl/learn-elm-architecture-in-javascript/issues/52
- * @param  {Object} item the todo item object
- * @param {Object} model - the App's (current) model (or "state").
- * @param {Function} singal - the Elm Architicture "dispacher" which will run
- * @return {Object} <li> DOM Tree which is nested in the <ul>.
+ * @param  {Todo} item the todo item object
+ * @param {Model} model - the App's (current) model (or "state").
+ * @param {Function} signal - the Elm Architecture "dispatcher" which will run
+ * @return {HTMLElement} <li> DOM Tree which is nested in the <ul>.
  * @example
  * // returns <li> DOM element with <div>, <input>. <label> & <button> nested
- * var DOM = render_item({id: 1, title: "Build Todo List App", done: false});
+ * var DOM = render_item({id: 1, title: "Build Todo List App", done: false}, model, signal);
  */
-function render_item (item, model, signal) {
-  return (
-    li([
-      "data-id=" + item.id,
-      "id=" + item.id,
-      item.done ? "class=completed" : "",
-      model && model.editing && model.editing === item.id ? "class=editing" : ""
-    ], [
-      div(["class=view"], [
-        input([
-          item.done ? "checked=true" : "",
-          "class=toggle",
-          "type=checkbox",
-          typeof signal === 'function' ? signal('TOGGLE', item.id) : ''
-          ], []), // <input> does not have any nested elements
-        label([ typeof signal === 'function' ? signal('EDIT', item.id) : '' ],
-          [text(item.title)]),
-        button(["class=destroy",
-          typeof signal === 'function' ? signal('DELETE', item.id) : ''])
-        ]
-      ), // </div>
+export function render_item(item: Todo, model: Model, signal: (action: string, data?: any) => () => void): HTMLElement {
+    const liAttributes = [`data-id=${item.id}`, `id=${item.id}`];
+    if (item.done) {
+        liAttributes.push("class=completed");
+    }
+    if (model.editing === item.id) {
+        liAttributes.push("class=editing");
+    }
 
-    ].concat(model && model.editing && model.editing === item.id ? [ // editing?
-      input(["class=edit", "id=" + item.id, "value=" + item.title, "autofocus"])
-    ] : []) // end concat()
-    ) // </li>
-  )
+    const inputAttributes = ["class=toggle", "type=checkbox"];
+    if (item.done) {
+        inputAttributes.push("checked=true");
+    }
+
+    return elmish.li(liAttributes, [
+        elmish.div(["class=view"], [
+            elmish.input([
+                ...inputAttributes,
+                `onclick=function(event){${signal('TOGGLE', item.id).toString()}()}`
+            ], []),
+            elmish.label([`ondblclick=function(event){${signal('EDIT', item.id).toString()}()}`], [elmish.text(item.title)]),
+            elmish.button(["class=destroy", `onclick=function(event){${signal('DELETE', item.id).toString()}()}`], [])
+        ]),
+        ...(model.editing === item.id ? [
+            elmish.input(["class=edit", `id=${item.id}`, `value=${item.title}`, "autofocus"], [])
+        ] : [])
+    ]);
 }
 
 /**
  * `render_main` renders the `<section class="main">` of the Todo List App
  * which contains all the "main" controls and the `<ul>` with the todo items.
- * @param {Object} model - the App's (current) model (or "state").
- * @param {Function} singal - the Elm Architicture "dispacher" which will run
- * @return {Object} <section> DOM Tree which containing the todo list <ul>, etc.
+ * @param {Model} model - the App's (current) model (or "state").
+ * @param {Function} signal - the Elm Architecture "dispatcher" which will run
+ * @return {HTMLElement} <section> DOM Tree which containing the todo list <ul>, etc.
  */
-function render_main (model, signal) {
-  // Requirement #1 - No Todos, should hide #footer and #main
-  var display = "style=display:"
-    + (model.todos && model.todos.length > 0 ? "block" : "none");
-
-  return (
-    section(["class=main", "id=main", display], [ // hide if no todo items.
-      input(["id=toggle-all", "type=checkbox",
-        typeof signal === 'function' ? signal('TOGGLE_ALL') : '',
-        (model.all_done ? "checked=checked" : ""),
-        "class=toggle-all"
-      ], []),
-      label(["for=toggle-all"], [ text("Mark all as complete") ]),
-      ul(["class=todo-list"],
-        (model.todos && model.todos.length > 0) ?
-        model.todos
-        .filter(function (item) {
-          switch(model.hash) {
-            case '#/active':
-              return !item.done;
-            case '#/completed':
-              return item.done;
-            default: // if hash doesn't match Active/Completed render ALL todos:
-              return item;
-          }
-        })
-        .map(function (item) {
-          return render_item(item, model, signal)
-        }) : null
-      ) // </ul>
-    ]) // </section>
-  )
+export function render_main(model: Model, signal: (action: string, data?: any) => () => void): HTMLElement {
+    const display = `style=display:${model.todos.length > 0 ? "block" : "none"}`;
+    return elmish.section(["class=main", "id=main", display], [
+        elmish.input([
+            "id=toggle-all",
+            "type=checkbox",
+            `onclick=function(event){${signal('TOGGLE_ALL').toString()}()}`,
+            model.all_done ? "checked=checked" : "",
+            "class=toggle-all"
+        ], []),
+        elmish.label(["for=toggle-all"], [elmish.text("Mark all as complete")]),
+        elmish.ul(["class=todo-list"], model.todos.length > 0
+            ? model.todos
+                .filter(item => {
+                switch (model.hash) {
+                    case '#/active':
+                        return !item.done;
+                    case '#/completed':
+                        return item.done;
+                    default:
+                        return true;
+                }
+            })
+                .map(item => render_item(item, model, signal))
+            : [])
+    ]);
 }
 
 /**
  * `render_footer` renders the `<footer class="footer">` of the Todo List App
  * which contains count of items to (still) to be done and a `<ul>` "menu"
  * with links to filter which todo items appear in the list view.
- * @param {Object} model - the App's (current) model (or "state").
- * @param {Function} singal - the Elm Architicture "dispacher" which will run
- * @return {Object} <section> DOM Tree which containing the <footer> element.
+ * @param {Model} model - the App's (current) model (or "state").
+ * @param {Function} signal - the Elm Architecture "dispatcher" which will run
+ * @return {HTMLElement} <section> DOM Tree which containing the <footer> element.
  * @example
  * // returns <footer> DOM element with other DOM elements nested:
  * var DOM = render_footer(model);
  */
-function render_footer (model, signal) {
-
-  // count how many "active" (not yet done) items by filtering done === false:
-  var done = (model.todos && model.todos.length > 0) ?
-    model.todos.filter( function (i) { return i.done; }).length : 0;
-  var count = (model.todos && model.todos.length > 0) ?
-    model.todos.filter( function (i) { return !i.done; }).length : 0;
-
-  // Requirement #1 - No Todos, should hide #footer and #main
-  var display = (count > 0 || done > 0) ? "block" : "none";
-
-  // number of completed items:
-  var done = (model.todos && model.todos.length > 0) ?
-    (model.todos.length - count) : 0;
-  var display_clear =  (done > 0) ? "block;" : "none;";
-
-  // pluarisation of number of items:
-  var left = (" item" + ( count > 1 || count === 0 ? 's' : '') + " left");
-
-  return (
-    footer(["class=footer", "id=footer", "style=display:" + display], [
-      span(["class=todo-count", "id=count"], [
-        strong(count),
-        text(left)
-      ]),
-      ul(["class=filters"], [
-        li([], [
-          a([
-            "href=#/", "id=all", "class=" +
-            (model.hash === '#/' ? "selected" : '')
-          ],
-          [text("All")])
+export function render_footer(model: Model, signal: (action: string, data?: any) => () => void): HTMLElement {
+    const activeCount = model.todos.filter(i => !i.done).length;
+    const completedCount = model.todos.length - activeCount;
+    const display = model.todos.length > 0 ? "block" : "none";
+    const displayClear = completedCount > 0 ? "block" : "none";
+    const itemText = ` item${activeCount !== 1 ? 's' : ''} left`;
+    return elmish.footer(["class=footer", "id=footer", `style=display:${display}`], [
+        elmish.span(["class=todo-count", "id=count"], [
+            elmish.strong(activeCount.toString()),
+            elmish.text(itemText)
         ]),
-        li([], [
-          a([
-            "href=#/active", "id=active", "class=" +
-            (model.hash === '#/active' ? "selected" : '')
-          ],
-          [text("Active")])
+        elmish.ul(["class=filters"], [
+            elmish.li([], [
+                elmish.a([
+                    "href=#/",
+                    "id=all",
+                    `class=${model.hash === '#/' ? "selected" : ''}`
+                ], [elmish.text("All")])
+            ]),
+            elmish.li([], [
+                elmish.a([
+                    "href=#/active",
+                    "id=active",
+                    `class=${model.hash === '#/active' ? "selected" : ''}`
+                ], [elmish.text("Active")])
+            ]),
+            elmish.li([], [
+                elmish.a([
+                    "href=#/completed",
+                    "id=completed",
+                    `class=${model.hash === '#/completed' ? "selected" : ''}`
+                ], [elmish.text("Completed")])
+            ])
         ]),
-        li([], [
-          a([
-            "href=#/completed", "id=completed", "class=" +
-            (model.hash === '#/completed' ? "selected" : '')
-          ],
-          [text("Completed")])
+        elmish.button([
+            "class=clear-completed",
+            `style=display:${displayClear}`,
+            `onclick=function(event){${signal('CLEAR_COMPLETED').toString()}()}`
+        ], [
+            elmish.text("Clear completed ["),
+            elmish.span(["id=completed-count"], [elmish.text(completedCount.toString())]),
+            elmish.text("]")
         ])
-      ]), // </ul>
-      button(["class=clear-completed", "style=display:" + display_clear,
-        typeof signal === 'function' ? signal('CLEAR_COMPLETED') : ''
-        ],
-        [
-          text("Clear completed ["),
-          span(["id=completed-count"], [
-            text(done)
-          ]),
-          text("]")
-        ]
-      )
-    ])
-  )
+    ]);
 }
 
 /**
  * `view` renders the entire Todo List App
  * which contains count of items to (still) to be done and a `<ul>` "menu"
  * with links to filter which todo items appear in the list view.
- * @param {Object} model - the App's (current) model (or "state").
- * @param {Function} singal - the Elm Architicture "dispacher" which will run
- * @return {Object} <section> DOM Tree which containing all other DOM elements.
+ * @param {Model} model - the App's (current) model (or "state").
+ * @param {Function} signal - the Elm Architecture "dispatcher" which will run
+ * @return {HTMLElement} <section> DOM Tree which containing all other DOM elements.
  * @example
  * // returns <section class="todo-app"> DOM element with other DOM els nested:
  * var DOM = view(model);
  */
-function view (model, signal) {
-
-  return (
-    section(["class=todoapp"], [ // array of "child" elements
-      header(["class=header"], [
-        h1([], [
-          text("todos")
-        ]), // </h1>
-        input([
-          "id=new-todo",
-          "class=new-todo",
-          "placeholder=What needs to be done?",
-          "autofocus"
-        ], []) // <input> is "self-closing"
-      ]), // </header>
-      render_main(model, signal),
-      render_footer(model, signal)
-    ]) // <section>
-  );
+export function view(model: Model, signal: (action: string, data?: any) => () => void): HTMLElement {
+    return elmish.section(["class=todoapp"], [
+        elmish.header(["class=header"], [
+            elmish.h1([], [elmish.text("todos")]),
+            elmish.input([
+                "id=new-todo",
+                "class=new-todo",
+                "placeholder=What needs to be done?",
+                "autofocus"
+            ], [])
+        ]),
+        render_main(model, signal),
+        render_footer(model, signal)
+    ]);
 }
 
 /**
  * `subscriptions` let us "listen" for events such as "key press" or "click".
  * and respond according to a pre-defined update/action.
- * @param {Function} singal - the Elm Architicture "dispacher" which will run
- * both the "update" and "render" functions when invoked with singal(action)
+ * @param {Function} signal - the Elm Architecture "dispatcher" which will run
+ * both the "update" and "render" functions when invoked with signal(action)
  */
-function subscriptions (signal) {
-	var ENTER_KEY = 13; // add a new todo item when [Enter] key is pressed
-	var ESCAPE_KEY = 27; // used for "escaping" when editing a Todo item
-
-  document.addEventListener('keyup', function handler (e) {
-    // console.log('e.keyCode:', e.keyCode, '| key:', e.key);
-
-    switch(e.keyCode) {
-      case ENTER_KEY:
-        var editing = document.getElementsByClassName('editing');
-        if (editing && editing.length > 0) {
-          signal('SAVE')(); // invoke singal inner callback
+export function subscriptions(signal: (action: string, data?: any) => () => void): void {
+    const ENTER_KEY = 13;
+    const ESCAPE_KEY = 27;
+    document.addEventListener('keyup', function handler(e: KeyboardEvent) {
+        switch (e.keyCode) {
+            case ENTER_KEY:
+                const editing = document.getElementsByClassName('editing');
+                if (editing.length > 0) {
+                    signal('SAVE')();
+                }
+                const new_todo = document.getElementById('new-todo') as HTMLInputElement;
+                if (new_todo.value.length > 0) {
+                    signal('ADD')();
+                    new_todo.value = '';
+                    new_todo.focus();
+                }
+                break;
+            case ESCAPE_KEY:
+                signal('CANCEL')();
+                break;
         }
-
-        var new_todo = document.getElementById('new-todo');
-        if(new_todo.value.length > 0) {
-          signal('ADD')(); // invoke singal inner callback
-          new_todo.value = ''; // reset <input> so we can add another todo
-          document.getElementById('new-todo').focus();
-        }
-        break;
-      case ESCAPE_KEY:
-        signal('CANCEL')();
-        break;
-    }
-  });
-
-  window.onhashchange = function route () {
-    signal('ROUTE')();
-  }
-}
-
-/* module.exports is needed to run the functions using Node.js for testing! */
-/* istanbul ignore next */
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    model: initial_model,
-    update: update,
-    render_item: render_item,     // export so that we can unit test
-    render_main: render_main,     // export for unit testing
-    render_footer: render_footer, // export for unit testing
-    subscriptions: subscriptions,
-    view: view
-  }
+    });
+    window.onhashchange = function route() {
+        signal('ROUTE')();
+    };
 }

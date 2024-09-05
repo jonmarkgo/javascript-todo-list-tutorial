@@ -10,6 +10,8 @@
   },
   "author": "@dwyl & friends!",
   "devDependencies": {
+    "@types/node": "^22.5.3",
+    "@types/tape": "^5.6.4",
     "decache": "^4.6.0",
     "jsdom": "^24.0.0",
     "jsdom-global": "^3.0.2",
@@ -18,15 +20,21 @@
     "pre-commit": "^1.2.2",
     "tap-nyc": "^1.0.3",
     "tape": "^5.0.1",
-    "ts-migrate": "^0.1.35"
+    "ts-loader": "^9.5.1",
+    "ts-migrate": "^0.1.35",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.0",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.0"
   },
   "scripts": {
     "check-coverage": "nyc check-coverage --statements 100 --functions 100 --lines 100 --branches 100",
-    "postinstall": "npm test",
-    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
-    "start": "node lib/server.js",
-    "dev": "live-server",
-    "test": "nyc tape ./test/*.test.js | tap-nyc"
+    "retest": "PORT=8000 node_modules/.bin/nodemon -e ts --exec ts-node ./test/*.test.ts",
+    "start": "node dist/server.js",
+    "dev": "webpack serve --mode development --open",
+    "test": "nyc ts-node node_modules/tape/bin/tape ./test/*.test.ts | tap-nyc",
+    "build": "webpack --mode production && tsc lib/server.ts --outDir dist"
   },
   "keywords": [
     "Todo List",
@@ -44,5 +52,8 @@
   "pre-commit": [
     "test",
     "check-coverage"
-  ]
+  ],
+  "dependencies": {
+    "@types/jsdom": "^21.1.7"
+  }
 }
