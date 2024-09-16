@@ -1,4 +1,4 @@
-import { button, div, text } from 'elmish';
+import * as elmish from '../lib/elmish.js';
 
 export type Model = number;
 export type Action = 'inc' | 'dec' | 'reset';
@@ -14,11 +14,11 @@ export const update = (action: Action, model: Model): Model => {
 };
 
 export const view = (model: Model, signal: Signal) => {
-  return div([], [
-    button(["class=inc", "id=inc", signal('inc')], [text('+')]),
-    div(["class=count", "id=count"], [text(model.toString())]),
-    button(["class=dec", "id=dec", signal('dec')], [text('-')]),
-    button(["class=reset", "id=reset", signal('reset')], [text('Reset')])
+  return elmish.div([], [
+    elmish.button(["class=inc", "id=inc", signal('inc')], [elmish.text('+')]),
+    elmish.div(["class=count", "id=count"], [elmish.text(model.toString())]),
+    elmish.button(["class=dec", "id=dec", signal('dec')], [elmish.text('-')]),
+    elmish.button(["class=reset", "id=reset", signal('reset')], [elmish.text('Reset')])
   ]);
 };
 

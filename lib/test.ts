@@ -1,5 +1,5 @@
 import { test, Assert } from 'qunit';
-import { TodoState, Todo, UpdateFunction, MountFunction, ViewFunction, EmptyFunction } from './types';
+import { TodoState, Todo, UpdateFunction, MountFunction, ViewFunction, EmptyFunction } from './types.js';
 
 const id: string = 'test-app';
 
@@ -8,14 +8,12 @@ declare const mount: MountFunction;
 declare const view: ViewFunction;
 declare const empty: EmptyFunction;
 
-type TestFunction = (assert: Assert) => void;
-
-test('update("", {todos:[]}) returns {todos:[]} (current state unmodified)', (assert) => {
+test('update("", {todos:[]}) returns {todos:[]} (current state unmodified)', (assert: Assert) => {
   const result = update('', { todos: [], hash: '#/' });
   assert.deepEqual(result, { todos: [], hash: '#/' });
 });
 
-test('Test Add Todo: update("ADD", model, "New Todo") adds a new todo', (assert) => {
+test('Test Add Todo: update("ADD", model, "New Todo") adds a new todo', (assert: Assert) => {
   const initialState: TodoState = { todos: [], hash: '#/' };
   const result = update('ADD', initialState, 'New Todo');
   assert.equal(result.todos.length, 1);
@@ -23,7 +21,7 @@ test('Test Add Todo: update("ADD", model, "New Todo") adds a new todo', (assert)
   assert.equal(result.todos[0].done, false);
 });
 
-test('Test Toggle Todo: update("TOGGLE", model, id) toggles todo status', (assert) => {
+test('Test Toggle Todo: update("TOGGLE", model, id) toggles todo status', (assert: Assert) => {
   const initialState: TodoState = {
     todos: [{ id: 1, title: 'Test Todo', done: false }],
     hash: '#/'
@@ -32,7 +30,7 @@ test('Test Toggle Todo: update("TOGGLE", model, id) toggles todo status', (asser
   assert.equal(result.todos[0].done, true);
 });
 
-test('Test Delete Todo: update("DELETE", model, id) removes a todo', (assert) => {
+test('Test Delete Todo: update("DELETE", model, id) removes a todo', (assert: Assert) => {
   const initialState: TodoState = {
     todos: [{ id: 1, title: 'Test Todo', done: false }],
     hash: '#/'
@@ -41,7 +39,7 @@ test('Test Delete Todo: update("DELETE", model, id) removes a todo', (assert) =>
   assert.equal(result.todos.length, 0);
 });
 
-test('mount sets initial state correctly', (assert) => {
+test('mount sets initial state correctly', (assert: Assert) => {
   const initialState: TodoState = { todos: [{ id: 1, title: 'Test Todo', done: false }], hash: '#/' };
   mount(initialState, update, view, id);
   const todoElement = document.querySelector('.todo-list li');
@@ -49,7 +47,7 @@ test('mount sets initial state correctly', (assert) => {
   assert.equal(todoElement?.textContent?.trim(), 'Test Todo', 'Todo title should be correct');
 });
 
-test('empty("test-app") should clear DOM in root node', (assert) => {
+test('empty("test-app") should clear DOM in root node', (assert: Assert) => {
   const rootElement = document.getElementById(id);
   if (rootElement) {
     empty(rootElement);
@@ -59,7 +57,7 @@ test('empty("test-app") should clear DOM in root node', (assert) => {
   }
 });
 
-test('Adding a new todo updates the view', (assert) => {
+test('Adding a new todo updates the view', (assert: Assert) => {
   const initialState: TodoState = { todos: [], hash: '#/' };
   mount(initialState, update, view, id);
 
@@ -72,7 +70,7 @@ test('Adding a new todo updates the view', (assert) => {
   assert.equal(todoItems[0].textContent?.trim(), 'New Todo Item', 'Todo item text should be correct');
 });
 
-test('Toggling a todo updates its status', (assert) => {
+test('Toggling a todo updates its status', (assert: Assert) => {
   const initialState: TodoState = {
     todos: [{ id: 1, title: 'Test Todo', done: false }],
     hash: '#/'
@@ -86,7 +84,7 @@ test('Toggling a todo updates its status', (assert) => {
   assert.ok(todoItem?.classList.contains('completed'), 'Todo item should be marked as completed');
 });
 
-test('Deleting a todo removes it from the view', (assert) => {
+test('Deleting a todo removes it from the view', (assert: Assert) => {
   const initialState: TodoState = {
     todos: [{ id: 1, title: 'Test Todo', done: false }],
     hash: '#/'

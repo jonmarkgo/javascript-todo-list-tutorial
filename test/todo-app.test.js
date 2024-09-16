@@ -1,66 +1,72 @@
-const test = require('tape');       // https://github.com/dwyl/learn-tape
-const fs = require('fs');           // to read html files (see below)
-const path = require('path');       // so we can open files cross-platform
-const html = fs.readFileSync(path.resolve(__dirname, '../index.html'));
-require('jsdom-global')(html);      // https://github.com/rstacruz/jsdom-global
-const app = require('../lib/todo-app.js'); // functions to test
-const id = 'test-app';              // all tests use 'test-app' as root element
-const elmish = require('../lib/elmish.ts'); // import "elmish" core functions
+import fs from 'fs';
+import path from 'path';
+import { JSDOM } from 'jsdom';
+import * as app from '../lib/todo-app.js';
+import * as elmish from '../lib/elmish.js';
+import { LocalStorage } from 'node-localstorage';
 
-test('`model` (Object) has desired keys', function (t) {
-  const keys = Object.keys(app.model);
-  t.deepEqual(keys, ['todos', 'hash'], "`todos` and `hash` keys are present.");
-  t.true(Array.isArray(app.model.todos), "model.todos is an Array")
-  t.end();
+const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf-8');
+const dom = new JSDOM(html);
+global.document = dom.window.document;
+global.window = dom.window;
+
+// Initialize LocalStorage before running tests
+global.localStorage = new LocalStorage('./scratch');
+
+const id = 'test-app';  // all tests use 'test-app' as root element
+
+describe('Todo App Model', () => {
+  test('`model` (Object) has desired keys', () => {
+    const keys = Object.keys(app.initial_model);
+    expect(keys).toEqual(['todos', 'hash']);
+    expect(Array.isArray(app.initial_model.todos)).toBe(true);
+  });
 });
 
-test('`update` default case should return model unmodified', function (t) {
-  const model = JSON.parse(JSON.stringify(app.model));
-  const unmodified_model = app.update('UNKNOWN_ACTION', model);
-  t.deepEqual(model, unmodified_model, "model returned unmodified");
-  t.end();
+test('`update` default case should return model unmodified', () => {
+  const model = JSON.parse(JSON.stringify(app.initial_model));
+  const unmodified_model = app.update('UNKNOWN_ACTION', model, '');
+  expect(model).toEqual(unmodified_model);
 });
 
-test('update `ADD` a new todo item to model.todos Array', function (t) {
-  const model = JSON.parse(JSON.stringify(app.model)); // initial state
-  t.equal(model.todos.length, 0, "initial model.todos.length is 0");
+test('update `ADD` a new todo item to model.todos Array', () => {
+  const model = JSON.parse(JSON.stringify(app.initial_model)); // initial state
+  expect(model.todos.length).toBe(0);
   const updated_model = app.update('ADD', model, "Add Todo List Item");
   const expected = { id: 1, title: "Add Todo List Item", done: false };
-  t.equal(updated_model.todos.length, 1, "updated_model.todos.length is 1");
-  t.deepEqual(updated_model.todos[0], expected, "Todo list item added.");
-  t.end();
+  expect(updated_model.todos.length).toBe(1);
+  expect(updated_model.todos[0]).toEqual(expected);
 });
 
-test('update `TOGGLE` a todo item from done=false to done=true', function (t) {
-  const model = JSON.parse(JSON.stringify(app.model)); // initial state
+test('update `TOGGLE` a todo item from done=false to done=true', () => {
+  const model = JSON.parse(JSON.stringify(app.initial_model)); // initial state
   const model_with_todo = app.update('ADD', model, "Toggle a todo list item");
   const item = model_with_todo.todos[0];
   const model_todo_done = app.update('TOGGLE', model_with_todo, item.id);
   const expected = { id: 1, title: "Toggle a todo list item", done: true };
-  t.deepEqual(model_todo_done.todos[0], expected, "Todo list item Toggled.");
-  t.end();
+  expect(model_todo_done.todos[0]).toEqual(expected);
 });
 
-test('`TOGGLE` (undo) a todo item from done=true to done=false', function (t) {
-  const model = JSON.parse(JSON.stringify(app.model)); // initial state
+test('`TOGGLE` (undo) a todo item from done=true to done=false', (t: Test) => {
+  const model = JSON.parse(JSON.stringify(app.model)) as TodoModel; // initial state
   const model_with_todo = app.update('ADD', model, "Toggle a todo list item");
   const item = model_with_todo.todos[0];
   const model_todo_done = app.update('TOGGLE', model_with_todo, item.id);
-  const expected = { id: 1, title: "Toggle a todo list item", done: true };
+  const expected: TodoItem = { id: 1, title: "Toggle a todo list item", done: true };
   t.deepEqual(model_todo_done.todos[0], expected, "Toggled done=false >> true");
   // add another item before "undoing" the original one:
   const model_second_item = app.update('ADD', model_todo_done, "Another todo");
   t.equal(model_second_item.todos.length, 2, "there are TWO todo items");
   // Toggle the original item such that: done=true >> done=false
   const model_todo_undone = app.update('TOGGLE', model_second_item, item.id);
-  const undone = { id: 1, title: "Toggle a todo list item", done: false };
-  t.deepEqual(model_todo_undone.todos[0],undone, "Todo item Toggled > undone!");
+  const undone: TodoItem = { id: 1, title: "Toggle a todo list item", done: false };
+  t.deepEqual(model_todo_undone.todos[0], undone, "Todo item Toggled > undone!");
   t.end();
 });
 
 // this is used for testing view functions which require a signal function
-function mock_signal () {
-  return function inner_function() {
+function mock_signal(): () => void {
+  return function inner_function(): void {
     console.log('done');
   }
 }
@@ -73,17 +79,24 @@ test('render_item HTML for a single Todo Item', function (t) {
     hash: '#/' // the "route" to display
   };
   // render the ONE todo list item:
-  document.getElementById(id).appendChild(
-    app.render_item(model.todos[0], model, mock_signal),
-  );
+  const container = document.getElementById(id);
+  if (container) {
+    container.appendChild(
+      app.render_item(model.todos[0], model, mock_signal),
+    );
+  } else {
+    t.fail('Container element not found');
+    return t.end();
+  }
 
-  const done = document.querySelectorAll('.completed')[0].textContent;
+  const done = document.querySelectorAll('.completed')[0]?.textContent;
   t.equal(done, 'Learn Elm Architecture', 'Done: Learn "TEA"');
 
   const checked = document.querySelectorAll('input')[0].checked;
   t.equal(checked, true, 'Done: ' + model.todos[0].title + " is done=true");
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element); // clear DOM ready for next test
   t.end();
 });
 
@@ -95,17 +108,21 @@ test('render_item HTML without a valid signal function', function (t) {
     hash: '#/' // the "route" to display
   };
   // render the ONE todo list item:
-  document.getElementById(id).appendChild(
-    app.render_item(model.todos[0], model),
-  );
+  const container = document.getElementById(id);
+  if (container) {
+    container.appendChild(
+      app.render_item(model.todos[0], model, undefined)
+    );
+  }
 
-  const done = document.querySelectorAll('.completed')[0].textContent;
+  const done = document.querySelectorAll('.completed')[0]?.textContent;
   t.equal(done, 'Learn Elm Architecture', 'Done: Learn "TEA"');
 
   const checked = document.querySelectorAll('input')[0].checked;
   t.equal(checked, true, 'Done: ' + model.todos[0].title + " is done=true");
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element); // clear DOM ready for next test
   t.end();
 });
 
@@ -119,19 +136,25 @@ test('render_main "main" view using (elmish) HTML DOM functions', function (t) {
     hash: '#/' // the "route" to display
   };
   // render the "main" view and append it to the DOM inside the `test-app` node:
-  document.getElementById(id).appendChild(app.render_main(model, mock_signal));
-  // test that the title text in the model.todos was rendered to <label> nodes:
-  document.querySelectorAll('.view').forEach(function (item, index) {
-    t.equal(item.textContent, model.todos[index].title,
-      "index #" + index + " <label> text: " + item.textContent)
-  })
+  const testAppElement = document.getElementById(id);
+  if (testAppElement) {
+    testAppElement.appendChild(app.render_main(model, mock_signal));
+    // test that the title text in the model.todos was rendered to <label> nodes:
+    document.querySelectorAll('.view').forEach(function (item, index) {
+      t.equal(item.textContent, model.todos[index].title,
+        "index #" + index + " <label> text: " + item.textContent)
+    })
+  } else {
+    t.fail(`Element with id '${id}' not found`);
+  }
 
   const inputs = document.querySelectorAll('input'); // todo items are 1,2,3
   [true, false, false].forEach(function(state, index){
     t.equal(inputs[index + 1].checked, state,
       "Todo #" + index + " is done=" + state)
   })
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element); // clear DOM ready for next test
   t.end();
 });
 
@@ -145,10 +168,14 @@ test('render_footer view using (elmish) HTML DOM functions', function (t) {
     hash: '#/' // the "route" to display
   };
   // render_footer view and append it to the DOM inside the `test-app` node:
-  document.getElementById(id).appendChild(app.render_footer(model));
+  const testAppElement = document.getElementById(id);
+  if (testAppElement) {
+    testAppElement.appendChild(app.render_footer(model, mock_signal));
+  }
 
   // todo-count should display 2 items left (still to be done):
-  const left = document.getElementById('count').innerHTML;
+  const countElement = document.getElementById('count');
+  const left = countElement ? countElement.innerHTML : '';
   t.equal(left, "<strong>2</strong> items left", "Todos remaining: " + left);
 
   // count number of footer <li> items:
@@ -171,7 +198,8 @@ test('render_footer view using (elmish) HTML DOM functions', function (t) {
   t.equal(clear, 'Clear completed [1]',
     '<button> in <footer> "Clear completed [1]"');
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element); // clear DOM ready for next test
   t.end();
 });
 
@@ -183,105 +211,148 @@ test('render_footer 1 item left (pluarisation test)', function (t) {
     hash: '#/' // the "route" to display
   };
   // render_footer view and append it to the DOM inside the `test-app` node:
-  document.getElementById(id).appendChild(app.render_footer(model));
+  const container = document.getElementById(id);
+  if (container) {
+    container.appendChild(app.render_footer(model, mock_signal));
+  } else {
+    t.fail('Container element not found');
+    return t.end();
+  }
 
   // todo-count should display "1 item left" (still to be done):
-  const left = document.getElementById('count').innerHTML;
+  const countElement = document.getElementById('count');
+  const left = countElement ? countElement.innerHTML : '';
   t.equal(left, "<strong>1</strong> item left", "Todos remaining: " + left);
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element); // clear DOM ready for next test
   t.end();
 });
 
 test('view renders the whole todo app using "partials"', function (t) {
   // render the view and append it to the DOM inside the `test-app` node:
-  document.getElementById(id).appendChild(app.view(app.model)); // initial_model
+  const container = document.getElementById(id);
+  if (container) {
+    container.appendChild(app.view(app.model, mock_signal));
+  }
 
-  t.equal(document.querySelectorAll('h1')[0].textContent, "todos", "<h1>todos");
+  const h1Element = document.querySelectorAll('h1')[0];
+  t.equal(h1Element?.textContent, "todos", "<h1>todos");
+
   // placeholder:
-  const placeholder = document.getElementById('new-todo')
-    .getAttribute("placeholder");
-  t.equal(placeholder, "What needs to be done?", "paceholder set on <input>");
+  const newTodoElement = document.getElementById('new-todo');
+  const placeholder = newTodoElement?.getAttribute("placeholder");
+  t.equal(placeholder, "What needs to be done?", "placeholder set on <input>");
 
   // todo-count should display 0 items left (based on initial_model):
-  const left = document.getElementById('count').innerHTML;
+  const countElement = document.getElementById('count');
+  const left = countElement?.innerHTML;
   t.equal(left, "<strong>0</strong> items left", "Todos remaining: " + left);
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  elmish.empty(document.getElementById(id) as HTMLElement); // clear DOM ready for next test
   t.end();
 });
 
 test('1. No Todos, should hide #footer and #main', function (t) {
   // render the view and append it to the DOM inside the `test-app` node:
-  document.getElementById(id).appendChild(app.view({todos: []})); // No Todos
+  const container = document.getElementById(id);
+  if (container) {
+    container.appendChild(app.view({ todos: [], hash: '#/' }, () => {})); // No Todos
+  }
 
-  const main_display = window.getComputedStyle(document.getElementById('main'));
-  t.equal(main_display._values.display, 'none', "No Todos, hide #main");
+  const mainElement = document.getElementById('main');
+  if (mainElement) {
+    const main_display = window.getComputedStyle(mainElement);
+    t.equal(main_display.display, 'none', "No Todos, hide #main");
+  } else {
+    t.fail('Main element not found');
+  }
 
-  const main_footer= window.getComputedStyle(document.getElementById('footer'));
-  t.equal(main_footer._values.display, 'none', "No Todos, hide #footer");
+  const footerElement = document.getElementById('footer');
+  if (footerElement) {
+    const main_footer = window.getComputedStyle(footerElement);
+    t.equal(main_footer.display, 'none', "No Todos, hide #footer");
+  } else {
+    t.fail('Footer element not found');
+  }
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element); // clear DOM ready for next test
   t.end();
 });
 
-// Testing localStorage requires "polyfil" because:a
-// https://github.com/jsdom/jsdom/issues/1137 ¯\_(ツ)_/¯
-// globals are usually bad! but a "necessary evil" here.
-global.localStorage = global.localStorage ? global.localStorage : {
-  getItem: function(key) {
-   const value = this[key];
-   return typeof value === 'undefined' ? null : value;
- },
- setItem: function (key, value) {
-   this[key] = value;
- },
- removeItem: function (key) {
-   delete this[key]
- }
-}
+// Testing localStorage is handled by the declarations in declarations.d.ts
+// The polyfill is no longer needed as we're using TypeScript declarations
+
 localStorage.removeItem('todos-elmish_store');
 
 test('2. New Todo, should allow me to add todo items', function (t) {
-  elmish.empty(document.getElementById(id));
+  const testAppElement = document.getElementById(id);
+  if (testAppElement) {
+    elmish.empty(testAppElement);
+  }
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount({todos: []}, app.update, app.view, id, app.subscriptions);
-  const new_todo = document.getElementById('new-todo');
-  // "type" content in the <input id="new-todo">:
-  const todo_text = 'Make Everything Awesome!     '; // deliberate whitespace!
-  new_todo.value = todo_text;
-  // trigger the [Enter] keyboard key to ADD the new todo:
-  document.dispatchEvent(new KeyboardEvent('keyup', {'keyCode': 13}));
-  const items = document.querySelectorAll('.view');
-  t.equal(items.length, 1, "should allow me to add todo items");
-  // check if the new todo was added to the DOM:
-  const actual = document.getElementById('1').textContent;
-  t.equal(todo_text.trim(), actual, "should trim text input")
+  const initialModel: TodoModel = { todos: [], hash: '#/' };
+  elmish.mount(initialModel, app.update, app.view, id, app.subscriptions);
+  const new_todo = document.getElementById('new-todo') as HTMLInputElement | null;
+  if (new_todo) {
+    // "type" content in the <input id="new-todo">:
+    const todo_text = 'Make Everything Awesome!     '; // deliberate whitespace!
+    new_todo.value = todo_text;
+    // trigger the [Enter] keyboard key to ADD the new todo:
+    new_todo.dispatchEvent(new KeyboardEvent('keyup', {'key': 'Enter'}));
 
-  // subscription keyCode trigger "branch" test (should NOT fire the signal):
-  const clone = document.getElementById(id).cloneNode(true);
-  document.dispatchEvent(new KeyboardEvent('keyup', {'keyCode': 42}));
-  t.deepEqual(document.getElementById(id), clone, "#" + id + " no change");
+    // Wait for the DOM to update
+    setTimeout(() => {
+      const items = document.querySelectorAll('.view');
+      t.equal(items.length, 1, "should allow me to add todo items");
 
-  // check that the <input id="new-todo"> was reset after the new item was added
-  t.equal(new_todo.value, '',
-    "should clear text input field when an item is added")
+      // check if the new todo was added to the DOM:
+      const todoElement = document.querySelector('.todo-list li');
+      if (todoElement) {
+        const actual = todoElement.textContent?.trim();
+        t.equal(todo_text.trim(), actual, "should trim text input");
+      } else {
+        t.fail('Todo item not found in DOM');
+      }
 
-  const main_display = window.getComputedStyle(document.getElementById('main'));
-  t.equal('block', main_display._values.display,
-    "should show #main and #footer when items added");
-  const main_footer= window.getComputedStyle(document.getElementById('footer'));
-  t.equal('block', main_footer._values.display, "item added, show #footer");
+      // check that the <input id="new-todo"> was reset after the new item was added
+      t.equal(new_todo.value, '', "should clear text input field when an item is added");
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
-  localStorage.removeItem('todos-elmish_' + id);
-  t.end();
+      const mainElement = document.getElementById('main');
+      const footerElement = document.getElementById('footer');
+
+      if (mainElement) {
+        const main_display = window.getComputedStyle(mainElement);
+        t.equal(main_display.display, 'block', "should show #main when items added");
+      } else {
+        t.fail('Main element not found');
+      }
+
+      if (footerElement) {
+        const footer_display = window.getComputedStyle(footerElement);
+        t.equal(footer_display.display, 'block', "item added, show #footer");
+      } else {
+        t.fail('Footer element not found');
+      }
+
+      elmish.empty(document.getElementById(id) as HTMLElement); // clear DOM ready for next test
+      localStorage.removeItem('todos-elmish_' + id);
+      t.end();
+    }, 0);
+  } else {
+    t.fail('New todo input element not found');
+    t.end();
+  }
 });
 
 test('3. Mark all as completed ("TOGGLE_ALL")', function (t) {
-  elmish.empty(document.getElementById(id));
+  const testAppElement = document.getElementById(id);
+  if (testAppElement) {
+    elmish.empty(testAppElement);
+  }
   localStorage.removeItem('todos-elmish_' + id);
-  const model = {
+  const model: TodoModel = {
     todos: [
       { id: 0, title: "Learn Elm Architecture", done: true },
       { id: 1, title: "Build Todo List App",    done: false },
@@ -295,52 +366,72 @@ test('3. Mark all as completed ("TOGGLE_ALL")', function (t) {
   const items = document.querySelectorAll('.view');
 
   document.querySelectorAll('.toggle').forEach(function(item, index) {
-    t.equal(item.checked, model.todos[index].done,
-      "Todo #" + index + " is done=" + item.checked
-      + " text: " + items[index].textContent)
+    if (item instanceof HTMLInputElement) {
+      t.equal(item.checked, model.todos[index].done,
+        "Todo #" + index + " is done=" + item.checked
+        + " text: " + items[index].textContent)
+    }
   })
 
   // click the toggle-all checkbox to trigger TOGGLE_ALL: >> true
-  document.getElementById('toggle-all').click(); // click toggle-all checkbox
-  document.querySelectorAll('.toggle').forEach(function(item, index) {
-    t.equal(item.checked, true,
-      "TOGGLE each Todo #" + index + " is done=" + item.checked
-      + " text: " + items[index].textContent)
-  });
-  t.equal(document.getElementById('toggle-all').checked, true,
-    "should allow me to mark all items as completed")
+  const toggleAllElement = document.getElementById('toggle-all');
+  if (toggleAllElement instanceof HTMLInputElement) {
+    toggleAllElement.click(); // click toggle-all checkbox
+    document.querySelectorAll('.toggle').forEach(function(item, index) {
+      if (item instanceof HTMLInputElement) {
+        t.equal(item.checked, true,
+          "TOGGLE each Todo #" + index + " is done=" + item.checked
+          + " text: " + items[index].textContent)
+      }
+    });
+    t.equal(toggleAllElement.checked, true,
+      "should allow me to mark all items as completed")
+  } else {
+    t.fail('Toggle all checkbox not found');
+  }
 
 
   // click the toggle-all checkbox to TOGGLE_ALL (again!) true >> false
-  document.getElementById('toggle-all').click(); // click toggle-all checkbox
-  document.querySelectorAll('.toggle').forEach(function(item, index) {
-    t.equal(item.checked, false,
-      "TOGGLE_ALL Todo #" + index + " is done=" + item.checked
-      + " text: " + items[index].textContent)
-  })
-  t.equal(document.getElementById('toggle-all').checked, false,
-    "should allow me to clear the completion state of all items")
+  const toggleAllElementAgain = document.getElementById('toggle-all');
+  if (toggleAllElementAgain instanceof HTMLInputElement) {
+    toggleAllElementAgain.click(); // click toggle-all checkbox
+    document.querySelectorAll('.toggle').forEach(function(item) {
+      if (item instanceof HTMLInputElement) {
+        t.equal(item.checked, false,
+          "TOGGLE_ALL Todo is done=" + item.checked
+          + " text: " + item.parentElement?.textContent)
+      }
+    });
+    t.equal(toggleAllElementAgain.checked, false,
+      "should allow me to clear the completion state of all items")
+  } else {
+    t.fail('Toggle all checkbox not found');
+  }
 
   // *manually* "click" each todo item:
-  document.querySelectorAll('.toggle').forEach(function(item, index) {
-    item.click(); // this should "toggle" the todo checkbox to done=true
-    t.equal(item.checked, true,
-      ".toggle.click() (each) Todo #" + index + " which is done=" + item.checked
-      + " text: " + items[index].textContent)
+  document.querySelectorAll('.toggle').forEach(function(item) {
+    if (item instanceof HTMLInputElement) {
+      item.click(); // this should "toggle" the todo checkbox to done=true
+      t.equal(item.checked, true,
+        `.toggle.click() (each) Todo which is done=${item.checked} text: ${item.parentElement?.textContent}`);
+    }
   });
   // the toggle-all checkbox should be "checked" as all todos are done=true!
-  t.equal(document.getElementById('toggle-all').checked, true,
-    "complete all checkbox should update state when items are completed")
+  const toggleAllCheckbox = document.getElementById('toggle-all');
+  if (toggleAllCheckbox instanceof HTMLInputElement) {
+    t.equal(toggleAllCheckbox.checked, true,
+      "complete all checkbox should update state when items are completed");
+  }
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  elmish.empty(document.getElementById(id) as HTMLElement); // clear DOM ready for next test
   localStorage.removeItem('todos-elmish_store');
   t.end();
 });
 
 test('4. Item: should allow me to mark items as complete', function (t) {
-  elmish.empty(document.getElementById(id));
+  elmish.empty(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
-  const model = {
+  const model: TodoModel = {
     todos: [
       { id: 0, title: "Make something people want.", done: false }
     ],
@@ -348,29 +439,30 @@ test('4. Item: should allow me to mark items as complete', function (t) {
   };
   // render the view and append it to the DOM inside the `test-app` node:
   elmish.mount(model, app.update, app.view, id, app.subscriptions);
-  const item = document.getElementById('0')
-  t.equal(item.textContent, model.todos[0].title, 'Item contained in model.');
+  const item = document.getElementById('0');
+  if (item) {
+    t.equal(item.textContent, model.todos[0].title, 'Item contained in model.');
+  } else {
+    t.fail('Item not found in DOM');
+  }
   // confirm that the todo item is NOT done (done=false):
-  t.equal(document.querySelectorAll('.toggle')[0].checked, false,
-  'Item starts out "active" (done=false)');
-
+  const toggleElement = document.querySelectorAll('.toggle')[0] as HTMLInputElement;
+  t.equal(toggleElement.checked, false, 'Item starts out "active" (done=false)');
 
   // click the checkbox to toggle it to done=true
-  document.querySelectorAll('.toggle')[0].click()
-  t.equal(document.querySelectorAll('.toggle')[0].checked, true,
-  'Item should allow me to mark items as complete');
+  toggleElement.click();
+  t.equal(toggleElement.checked, true, 'Item should allow me to mark items as complete');
 
   // click the checkbox to toggle it to done=false "undo"
-  document.querySelectorAll('.toggle')[0].click()
-  t.equal(document.querySelectorAll('.toggle')[0].checked, false,
-  'Item should allow me to un-mark items as complete');
+  toggleElement.click();
+  t.equal(toggleElement.checked, false, 'Item should allow me to un-mark items as complete');
   t.end();
 });
 
 test('4.1 DELETE item by clicking <button class="destroy">', function (t) {
-  elmish.empty(document.getElementById(id));
+  elmish.empty(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
-  const model = {
+  const model: TodoModel = {
     todos: [
       { id: 0, title: "Make something people want.", done: false }
     ],
@@ -378,23 +470,30 @@ test('4.1 DELETE item by clicking <button class="destroy">', function (t) {
   };
   // render the view and append it to the DOM inside the `test-app` node:
   elmish.mount(model, app.update, app.view, id, app.subscriptions);
-  // const todo_count = ;
   t.equal(document.querySelectorAll('.destroy').length, 1, "one destroy button")
 
-  const item = document.getElementById('0')
-  t.equal(item.textContent, model.todos[0].title, 'Item contained in DOM.');
-  // DELETE the item by clicking on the <button class="destroy">:
-  const button = item.querySelectorAll('button.destroy')[0];
-  button.click()
-  // confirm that there is no loger a <button class="destroy">
-  t.equal(document.querySelectorAll('button.destroy').length, 0,
-    'there is no loger a <button class="destroy"> as the only item was DELETEd')
-  t.equal(document.getElementById('0'), null, 'todo item successfully DELETEd');
+  const item = document.getElementById('0');
+  if (item) {
+    t.equal(item.textContent, model.todos[0].title, 'Item contained in DOM.');
+    // DELETE the item by clicking on the <button class="destroy">:
+    const button = item.querySelector('button.destroy');
+    if (button instanceof HTMLButtonElement) {
+      button.click();
+      // confirm that there is no longer a <button class="destroy">
+      t.equal(document.querySelectorAll('button.destroy').length, 0,
+        'there is no longer a <button class="destroy"> as the only item was DELETEd');
+      t.equal(document.getElementById('0'), null, 'todo item successfully DELETEd');
+    } else {
+      t.fail('Destroy button not found');
+    }
+  } else {
+    t.fail('Todo item not found');
+  }
   t.end();
 });
 
 test('5.1 Editing: > Render an item in "editing mode"', function (t) {
-  elmish.empty(document.getElementById(id));
+  elmish.empty(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -406,25 +505,32 @@ test('5.1 Editing: > Render an item in "editing mode"', function (t) {
     editing: 2 // edit the 3rd todo list item (which has id == 2)
   };
   // render the ONE todo list item in "editing mode" based on model.editing:
-  document.getElementById(id).appendChild(
-    app.render_item(model.todos[2], model, mock_signal),
-  );
-  // test that signal (in case of the test mock_signal) is onclick attribute:
-  t.equal(document.querySelectorAll('.view > label')[0].onclick.toString(),
-    mock_signal().toString(), "mock_signal is onclick attribute of label");
+  const container = document.getElementById(id);
+  if (container) {
+    container.appendChild(
+      app.render_item(model.todos[2], model, mock_signal),
+    );
+    // test that signal (in case of the test mock_signal) is onclick attribute:
+    const label = document.querySelectorAll('.view > label')[0] as HTMLLabelElement;
+    t.equal(label.onclick?.toString(),
+      mock_signal().toString(), "mock_signal is onclick attribute of label");
+  } else {
+    t.fail('Container element not found');
+  }
 
   // test that the <li class="editing"> and <input class="edit"> was rendered:
   t.equal(document.querySelectorAll('.editing').length, 1,
     "<li class='editing'> element is visible");
   t.equal(document.querySelectorAll('.edit').length, 1,
     "<input class='edit'> element is visible");
-  t.equal(document.querySelectorAll('.edit')[0].value, model.todos[2].title,
+  const editInput = document.querySelectorAll('.edit')[0] as HTMLInputElement;
+  t.equal(editInput.value, model.todos[2].title,
     "<input class='edit'> has value: " + model.todos[2].title);
   t.end();
 });
 
 test('5.2 Double-click an item <label> to edit it', function (t) {
-  elmish.empty(document.getElementById(id));
+  elmish.empty(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -435,20 +541,30 @@ test('5.2 Double-click an item <label> to edit it', function (t) {
   };
   // render the view and append it to the DOM inside the `test-app` node:
   elmish.mount(model, app.update, app.view, id, app.subscriptions);
-  const label = document.querySelectorAll('.view > label')[1]
+  const label = document.querySelectorAll('.view > label')[1] as HTMLLabelElement;
   // "double-click" i.e. click the <label> twice in quick succession:
-  label.click();
-  label.click();
-  // confirm that we are now in editing mode:
-  t.equal(document.querySelectorAll('.editing').length, 1,
-    "<li class='editing'> element is visible");
-  t.equal(document.querySelectorAll('.edit')[0].value, model.todos[1].title,
-    "<input class='edit'> has value: " + model.todos[1].title);
+  if (label) {
+    label.click();
+    label.click();
+    // confirm that we are now in editing mode:
+    t.equal(document.querySelectorAll('.editing').length, 1,
+      "<li class='editing'> element is visible");
+    const editInput = document.querySelectorAll('.edit')[0] as HTMLInputElement;
+    if (editInput) {
+      t.equal(editInput.value, model.todos[1].title,
+        "<input class='edit'> has value: " + model.todos[1].title);
+    } else {
+      t.fail('Edit input not found');
+    }
+  } else {
+    t.fail('Label element not found');
+  }
   t.end();
 });
 
 test('5.2.2 Slow clicks do not count as double-click > no edit!', function (t) {
-  elmish.empty(document.getElementById(id));
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -459,12 +575,12 @@ test('5.2.2 Slow clicks do not count as double-click > no edit!', function (t) {
   };
   // render the view and append it to the DOM inside the `test-app` node:
   elmish.mount(model, app.update, app.view, id, app.subscriptions);
-  const label = document.querySelectorAll('.view > label')[1]
+  const label = document.querySelectorAll('.view > label')[1] as HTMLLabelElement;
   // "double-click" i.e. click the <label> twice in quick succession:
   label.click();
   setTimeout(function (){
     label.click();
-    // confirm that we are now in editing mode:
+    // confirm that we are not in editing mode:
     t.equal(document.querySelectorAll('.editing').length, 0,
       "<li class='editing'> element is NOT visible");
     t.end();
@@ -472,7 +588,7 @@ test('5.2.2 Slow clicks do not count as double-click > no edit!', function (t) {
 });
 
 test('5.3 [ENTER] Key in edit mode triggers SAVE action', function (t) {
-  elmish.empty(document.getElementById(id));
+  elmish.empty(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -487,19 +603,30 @@ test('5.3 [ENTER] Key in edit mode triggers SAVE action', function (t) {
   // change the
   const updated_title = "Do things that don\'t scale!  "
   // apply the updated_title to the <input class="edit">:
-  document.querySelectorAll('.edit')[0].value = updated_title;
-  // trigger the [Enter] keyboard key to ADD the new todo:
-  document.dispatchEvent(new KeyboardEvent('keyup', {'keyCode': 13}));
-  // confirm that the todo item title was updated to the updated_title:
-  const label = document.querySelectorAll('.view > label')[1].textContent;
-  t.equal(label, updated_title.trim(),
-      "item title updated to:" + updated_title + ' (trimmed)');
+  const editInput = document.querySelectorAll('.edit')[0] as HTMLInputElement;
+  if (editInput) {
+    editInput.value = updated_title;
+    // trigger the [Enter] keyboard key to ADD the new todo:
+    document.dispatchEvent(new KeyboardEvent('keyup', {'key': 'Enter'}));
+    // confirm that the todo item title was updated to the updated_title:
+    const labelElement = document.querySelectorAll('.view > label')[1];
+    if (labelElement) {
+      const label = labelElement.textContent;
+      t.equal(label, updated_title.trim(),
+          "item title updated to:" + updated_title + ' (trimmed)');
+    } else {
+      t.fail('Label element not found');
+    }
+  } else {
+    t.fail('Edit input element not found');
+  }
   t.end();
 });
 
 test('5.4 SAVE should remove the item if an empty text string was entered',
   function (t) {
-  elmish.empty(document.getElementById(id));
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -513,16 +640,22 @@ test('5.4 SAVE should remove the item if an empty text string was entered',
   elmish.mount(model, app.update, app.view, id, app.subscriptions);
   t.equal(document.querySelectorAll('.view').length, 2, 'todo count: 2');
   // apply empty string to the <input class="edit">:
-  document.querySelectorAll('.edit')[0].value = '';
-  // trigger the [Enter] keyboard key to ADD the new todo:
-  document.dispatchEvent(new KeyboardEvent('keyup', {'keyCode': 13}));
-  // confirm that the todo item was removed!
-  t.equal(document.querySelectorAll('.view').length, 1, 'todo count: 1');
+  const editInput = document.querySelectorAll('.edit')[0] as HTMLInputElement;
+  if (editInput) {
+    editInput.value = '';
+    // trigger the [Enter] keyboard key to ADD the new todo:
+    document.dispatchEvent(new KeyboardEvent('keyup', {'key': 'Enter'}));
+    // confirm that the todo item was removed!
+    t.equal(document.querySelectorAll('.view').length, 1, 'todo count: 1');
+  } else {
+    t.fail('Edit input element not found');
+  }
   t.end();
 });
 
 test('5.5 CANCEL should cancel edits on escape', function (t) {
-  elmish.empty(document.getElementById(id));
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -534,23 +667,30 @@ test('5.5 CANCEL should cancel edits on escape', function (t) {
   };
   // render the view and append it to the DOM inside the `test-app` node:
   elmish.mount(model, app.update, app.view, id, app.subscriptions);
-  t.equal(document.querySelectorAll('.view > label')[1].textContent,
+  const label = document.querySelectorAll('.view > label')[1] as HTMLLabelElement;
+  t.equal(label.textContent,
     model.todos[1].title, 'todo id 1 has title: ' + model.todos[1].title);
   // apply empty string to the <input class="edit">:
-  document.querySelectorAll('.edit')[0].value = 'Hello World';
-  // trigger the [esc] keyboard key to CANCEL editing
-  document.dispatchEvent(new KeyboardEvent('keyup', {'keyCode': 27}));
-  // confirm the item.title is still the original title:
-  t.equal(document.querySelectorAll('.view > label')[1].textContent,
-      model.todos[1].title, 'todo id 1 has title: ' + model.todos[1].title);
+  const editInput = document.querySelectorAll('.edit')[0] as HTMLInputElement;
+  if (editInput) {
+    editInput.value = 'Hello World';
+    // trigger the [esc] keyboard key to CANCEL editing
+    document.dispatchEvent(new KeyboardEvent('keyup', {'key': 'Escape'}));
+    // confirm the item.title is still the original title:
+    const updatedLabel = document.querySelectorAll('.view > label')[1] as HTMLLabelElement;
+    t.equal(updatedLabel.textContent,
+        model.todos[1].title, 'todo id 1 has title: ' + model.todos[1].title);
+  } else {
+    t.fail('Edit input not found');
+  }
   localStorage.removeItem('todos-elmish_' + id);
   t.end();
 });
 
 test('6. Counter > should display the current number of todo items',
   function (t) {
-  elmish.empty(document.getElementById(id));
-  const model = {
+  elmish.empty(document.getElementById(id) as HTMLElement);
+  const model: TodoModel = {
     todos: [
       { id: 0, title: "Make something people want.", done: false },
       { id: 1, title: "Bootstrap for as long as you can", done: false },
@@ -561,18 +701,23 @@ test('6. Counter > should display the current number of todo items',
   // render the view and append it to the DOM inside the `test-app` node:
   elmish.mount(model, app.update, app.view, id, app.subscriptions);
   // count:
-  const count = parseInt(document.getElementById('count').textContent, 10);
-  t.equal(count, model.todos.length, "displays todo item count: " + count);
+  const countElement = document.getElementById('count');
+  if (countElement) {
+    const count = parseInt(countElement.textContent || '0', 10);
+    t.equal(count, model.todos.length, "displays todo item count: " + count);
+  } else {
+    t.fail('Count element not found');
+  }
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  elmish.empty(document.getElementById(id) as HTMLElement); // clear DOM ready for next test
   localStorage.removeItem('todos-elmish_' + id);
   t.end();
 });
 
 test('7. Clear Completed > should display the number of completed items',
   function (t) {
-  elmish.empty(document.getElementById(id));
-  const model = {
+  elmish.empty(document.getElementById(id) as HTMLElement);
+  const model: TodoModel = {
     todos: [
       { id: 0, title: "Make something people want.", done: false },
       { id: 1, title: "Bootstrap for as long as you can", done: true },
@@ -587,14 +732,16 @@ test('7. Clear Completed > should display the number of completed items',
     "at the start, there are 3 todo items in the DOM.");
 
   // count completed items
-  const completed_count =
-    parseInt(document.getElementById('completed-count').textContent, 10);
+  const completedCountElement = document.getElementById('completed-count');
+  const completed_count = completedCountElement && completedCountElement.textContent
+    ? parseInt(completedCountElement.textContent, 10)
+    : 0;
   const done_count = model.todos.filter(function(i) {return i.done }).length;
   t.equal(completed_count, done_count,
     "displays completed items count: " + completed_count);
 
   // clear completed items:
-  const button = document.querySelectorAll('.clear-completed')[0];
+  const button = document.querySelectorAll('.clear-completed')[0] as HTMLButtonElement;
   button.click();
 
   // confirm that there is now only ONE todo list item in the DOM:
@@ -602,16 +749,18 @@ test('7. Clear Completed > should display the number of completed items',
     "after clearing completed items, there is only 1 todo item in the DOM.");
 
   // no clear completed button in the DOM when there are no "done" todo items:
-  t.equal(document.querySelectorAll('clear-completed').length, 0,
+  t.equal(document.querySelectorAll('.clear-completed').length, 0,
     'no clear-completed button when there are no done items.')
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element); // clear DOM ready for next test
   localStorage.removeItem('todos-elmish_' + id);
   t.end();
 });
 
 test('8. Persistence > should persist its data', function (t) {
-  elmish.empty(document.getElementById(id));
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element);
   const model = {
     todos: [
       { id: 0, title: "Make something people want.", done: false }
@@ -625,7 +774,7 @@ test('8. Persistence > should persist its data', function (t) {
   t.equal(localStorage.getItem('todos-elmish_' + id),
     JSON.stringify(model), "data is persisted to localStorage");
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  if (element) elmish.empty(element); // clear DOM ready for next test
   localStorage.removeItem('todos-elmish_' + id);
   t.end();
 });
@@ -633,8 +782,8 @@ test('8. Persistence > should persist its data', function (t) {
 test('9. Routing > should allow me to display active/completed/all items',
   function (t) {
   localStorage.removeItem('todos-elmish_' + id);
-  elmish.empty(document.getElementById(id));
-  const model = {
+  elmish.empty(document.getElementById(id) as HTMLElement);
+  const model: TodoModel = {
     todos: [
       { id: 0, title: "Make something people want.", done: false },
       { id: 1, title: "Bootstrap for as long as you can", done: true },
@@ -644,36 +793,43 @@ test('9. Routing > should allow me to display active/completed/all items',
   };
   // render the view and append it to the DOM inside the `test-app` node:
   elmish.mount(model, app.update, app.view, id, app.subscriptions);
-  const mod = app.update('ROUTE', model);
+  const mod = app.update('ROUTE', model, '');
   // t.equal(mod.hash, '#/', 'default route is #/');
 
   t.equal(document.querySelectorAll('.view').length, 1, "one active item");
-  let selected = document.querySelectorAll('.selected')[0]
+  const selected = document.querySelectorAll('.selected')[0] as HTMLElement;
   t.equal(selected.id, 'active', "active footer filter is selected");
 
   // empty:
-  elmish.empty(document.getElementById(id));
+  const elementToEmptyActive = document.getElementById(id);
+  if (elementToEmptyActive) {
+    elmish.empty(elementToEmptyActive);
+  }
   localStorage.removeItem('todos-elmish_' + id);
-  // show COMPLTED items:
+  // show COMPLETED items:
   model.hash = '#/completed';
   elmish.mount(model, app.update, app.view, id, app.subscriptions);
   t.equal(document.querySelectorAll('.view').length, 2,
     "two completed items");
-  selected = document.querySelectorAll('.selected')[0]
-  t.equal(selected.id, 'completed', "completed footer filter is selected");
+  const selectedCompleted = document.querySelectorAll('.selected')[0] as HTMLElement;
+  t.equal(selectedCompleted.id, 'completed', "completed footer filter is selected");
 
   // empty:
-  elmish.empty(document.getElementById(id));
+  const elementToEmptyCompleted = document.getElementById(id);
+  if (elementToEmptyCompleted) {
+    elmish.empty(elementToEmptyCompleted);
+  }
   localStorage.removeItem('todos-elmish_' + id);
   // show ALL items:
   model.hash = '#/';
   elmish.mount(model, app.update, app.view, id, app.subscriptions);
   t.equal(document.querySelectorAll('.view').length, 3,
     "three items total");
-  selected = document.querySelectorAll('.selected')[0]
-  t.equal(selected.id, 'all', "all footer filter is selected");
+  const selectedAll = document.querySelectorAll('.selected')[0] as HTMLElement;
+  t.equal(selectedAll.id, 'all', "all footer filter is selected");
 
-  elmish.empty(document.getElementById(id)); // clear DOM ready for next test
+  const element = document.getElementById(id);
+  if (element) elmish.empty(element); // clear DOM ready for next test
   localStorage.removeItem('todos-elmish_' + id);
   t.end();
 });

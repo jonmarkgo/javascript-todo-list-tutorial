@@ -38,11 +38,11 @@ export function mount(model: Model, update: (action: Action, model: Model) => Mo
   function signal(action: Action): () => void {
     return function callback() {     // and returns callback
       model = update(action, model); // update model according to action
-      empty(root);
-      root.appendChild(view(model, signal)); // subsequent re-rendering
+      empty(root!);
+      root!.appendChild(view(model, signal)); // subsequent re-rendering
     };
   }
-  root.appendChild(view(model, signal));    // render initial model (once)
+  root!.appendChild(view(model, signal));    // render initial model (once)
 }
 
 // The following are "Helper" Functions which each "Do ONLY One Thing" and are
