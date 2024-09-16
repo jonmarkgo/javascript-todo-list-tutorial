@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["es6", "dom"],
+    "allowJs": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["lib/**/*.ts", "test/**/*.ts", "types/**/*.d.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}
