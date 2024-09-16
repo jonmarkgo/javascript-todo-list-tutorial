@@ -1,7 +1,7 @@
 const test = require('tape');       // https://github.com/dwyl/learn-tape
 const fs = require('fs');           // read html files (see below)
 const path = require('path');       // so we can open files cross-platform
-const elmish = require('../lib/elmish.js');
+const elmish = require('../lib/elmish.ts');
 const html = fs.readFileSync(path.resolve(__dirname, '../index.html'));
 require('jsdom-global')(html);   // https://github.com/rstacruz/jsdom-global
 const jsdom = require("jsdom");

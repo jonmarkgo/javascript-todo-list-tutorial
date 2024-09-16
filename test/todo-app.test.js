@@ -5,7 +5,7 @@ const html = fs.readFileSync(path.resolve(__dirname, '../index.html'));
 require('jsdom-global')(html);      // https://github.com/rstacruz/jsdom-global
 const app = require('../lib/todo-app.js'); // functions to test
 const id = 'test-app';              // all tests use 'test-app' as root element
-const elmish = require('../lib/elmish.js'); // import "elmish" core functions
+const elmish = require('../lib/elmish.ts'); // import "elmish" core functions
 
 test('`model` (Object) has desired keys', function (t) {
   const keys = Object.keys(app.model);

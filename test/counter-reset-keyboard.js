@@ -6,7 +6,7 @@
  in the broweser, the "elmish" DOM functions are loaded in a <script> tag */
 /* istanbul ignore next */
 if (typeof require !== 'undefined' && this.window !== this) {
-  var { button, div, empty, mount, text } = require('../lib/elmish.js');
+  var { button, div, empty, mount, text } = require('../lib/elmish.ts');
 }
 
 function update (action, model) {    // Update function takes the current state

@@ -21,8 +21,10 @@
     "jsdom-global": "^3.0.2",
     "live-server": "^1.1.0",
     "pre-commit": "^1.2.2",
+    "tap-nyc": "^1.0.3",
+    "tape": "^5.0.1",
     "ts-jest": "^29.2.5",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
   },
   "scripts": {
