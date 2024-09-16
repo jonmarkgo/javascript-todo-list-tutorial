@@ -3,8 +3,8 @@
     /* Language and Environment */
     "target": "ES2018",
     "lib": ["dom", "es2018"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
 
     /* Paths */
     "rootDir": ".",
@@ -32,7 +32,7 @@
     "skipLibCheck": true,
 
     /* Additional Options */
-    "types": ["jest", "node", "jsdom"],
+    "types": ["jest", "node", "jsdom", "qunit"],
     "resolveJsonModule": true
   },
   "include": [
