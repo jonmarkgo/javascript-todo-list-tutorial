@@ -1,10 +1,7 @@
-import { expect } from 'chai';
-import { describe, it, before, after, beforeEach, afterEach } from 'mocha';
 import { JSDOM } from 'jsdom';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { LocalStorage } from 'node-localstorage';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,13 +24,13 @@ import { view, update, subscriptions } from '../dist/todo-app.js';
 const id = 'test-app';              // all tests use separate root element
 
 describe('elmish', () => {
-  before(() => {
+  beforeAll(() => {
     const testApp = document.createElement('div');
     testApp.id = id;
     document.body.appendChild(testApp);
   });
 
-  after(() => {
+  afterAll(() => {
     const testApp = document.getElementById(id);
     if (testApp) {
       document.body.removeChild(testApp);
@@ -43,7 +40,7 @@ describe('elmish', () => {
   describe('empty', () => {
     it('removes DOM elements from container', () => {
       const root = document.getElementById(id);
-      expect(root).to.exist;
+      expect(root).toBeTruthy();
       if (!root) return;
 
       const div = document.createElement('div');
@@ -51,54 +48,50 @@ describe('elmish', () => {
       div.textContent = 'Hello World!';
       root.appendChild(div);
 
-      expect(root.childElementCount).to.equal(1, `Root element ${id} has 1 child element`);
+      expect(root.childElementCount).toBe(1);
 
       elmish.empty(root);
-      expect(root.childElementCount).to.equal(0, "After empty(root) has 0 child elements");
+      expect(root.childElementCount).toBe(0);
     });
   });
 });
 
 describe('mount app', () => {
   it('expects state to be Zero after reset', async () => {
-    // use view and update from counter-reset example
-    // to confirm that our mount function is generic!
     const { view, update } = await import('./counter.js');
 
     const root = document.getElementById(id);
-    expect(root).to.exist;
+    expect(root).toBeTruthy();
     if (!root) return;
 
-    // Define the correct type for the view function
     type ViewFunction = (model: number, signal: (action: string) => () => void) => HTMLElement;
 
     elmish.mount(7, update, view as ViewFunction, id, () => {});
     const actualElement = document.getElementById(id);
-    expect(actualElement).to.exist;
+    expect(actualElement).toBeTruthy();
     if (!actualElement) return;
 
     const actual = actualElement.textContent;
-    expect(actual).to.exist;
+    expect(actual).toBeTruthy();
     if (!actual) return;
 
     const actual_stripped = parseInt(actual.replace('+', '').replace('-Reset', ''), 10);
     const expected = 7;
-    expect(actual_stripped).to.equal(expected, "Initial state set to 7.");
+    expect(actual_stripped).toBe(expected);
 
-    // reset to zero:
     const btn = root.querySelector(".reset") as HTMLElement;
-    expect(btn).to.exist;
+    expect(btn).toBeTruthy();
     if (!btn) return;
 
-    btn.click(); // Click the Reset button!
+    btn.click();
     const countElement = root.querySelector('.count');
-    expect(countElement).to.exist;
+    expect(countElement).toBeTruthy();
     if (!countElement) return;
 
     const state = parseInt(countElement.textContent || '0', 10);
-    expect(state).to.equal(0, "State is 0 (Zero) after reset.");
+    expect(state).toBe(0);
 
-    elmish.empty(root); // clean up after tests
+    elmish.empty(root);
   });
 });
 
@@ -117,33 +110,28 @@ describe('add_attributes', () => {
 
     container.appendChild(inputElement);
 
-    expect(inputElement).to.exist;
-    expect(inputElement.className).to.equal('new-todo');
-    expect(inputElement.id).to.equal('new');
-    expect(inputElement.autofocus).to.be.true;
-
-    // Note: The following assertion is commented out due to a breaking change in JSDOM
-    // See: https://github.com/dwyl/javascript-todo-list-tutorial/issues/29
-    // expect(document.activeElement).to.equal(inputElement);
+    expect(inputElement).toBeTruthy();
+    expect(inputElement.className).toBe('new-todo');
+    expect(inputElement.id).toBe('new');
+    expect(inputElement.autofocus).toBe(true);
   });
 
   it('applies HTML class attribute to el', () => {
     const root = document.getElementById(id);
-    expect(root).to.exist;
+    expect(root).toBeTruthy();
     if (!root) return;
 
     let div = document.createElement('div');
     div.id = 'divid';
     div = elmish.add_attributes(["class=apptastic"], div) as HTMLDivElement;
     root.appendChild(div);
-    // test the div has the desired class:
     const nodes = document.getElementsByClassName('apptastic');
-    expect(nodes.length).to.equal(1, "<div> has 'apptastic' CSS class applied");
+    expect(nodes.length).toBe(1);
   });
 
   it('applies id HTML attribute to a node', () => {
     const root = document.getElementById(id);
-    expect(root).to.exist;
+    expect(root).toBeTruthy();
     if (!root) return;
 
     let el = document.createElement('section');
@@ -153,8 +141,8 @@ describe('add_attributes', () => {
     el.appendChild(txt);
     root.appendChild(el);
     const actual = document.getElementById('myid')?.textContent;
-    expect(actual).to.equal(text, "<section> has 'myid' id attribute");
-    elmish.empty(root); // clear the "DOM"/"state" before next test
+    expect(actual).toBe(text);
+    elmish.empty(root);
   });
 });
 
@@ -724,3 +712,23 @@ describe('subscriptions test using counter-reset-keyboard ⌨️', () => {
     elmish.empty(root);
   });
 });
+||||||| 91a96ee
+=======
+import test, { Test } from 'tape';
+import fs from 'fs';
+import path from 'path';
+import * as elmish from '../lib/elmish';
+import { JSDOM } from 'jsdom';
+
+const html: string = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf-8');
+require('jsdom-global')(html);
+
+const id: string = 'test-app';
+
+// Import types from Elmish namespace
+type Model = Elmish.Model;
+type Action = Elmish.Action;
+type UpdateFunction = Elmish.UpdateFunction;
+type ViewFunction = Elmish.ViewFunction;
+type SignalFunction = Elmish.SignalFunction;
+>>>>>>> origin/devin/typescript-migration-test-elmish-test-js
