@@ -9,6 +9,10 @@
     /* Paths */
     "rootDir": ".",
     "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["node_modules/*"]
+    },
 
     /* JavaScript Support */
     "allowJs": true,
@@ -28,7 +32,7 @@
     "skipLibCheck": true,
 
     /* Additional Options */
-    "types": ["jest"],
+    "types": ["jest", "node", "jsdom"],
     "resolveJsonModule": true
   },
   "include": [
@@ -36,10 +40,12 @@
     "test/**/*.ts",
     "lib/**/*.ts",
     "*.ts",
-    "types/**/*.d.ts"
+    "types/**/*.d.ts",
+    "test/declarations.d.ts"
   ],
   "exclude": [
     "node_modules",
+    "dist",
     "**/*.spec.ts"
   ]
 }
