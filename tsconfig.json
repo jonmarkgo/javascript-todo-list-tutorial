@@ -3,7 +3,8 @@
     /* Language and Environment */
     "target": "ES2018",
     "lib": ["dom", "es2018"],
-    "module": "commonjs",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
 
     /* Paths */
     "rootDir": ".",
@@ -34,7 +35,8 @@
     "src/**/*",
     "test/**/*.ts",
     "lib/**/*.ts",
-    "*.ts"
+    "*.ts",
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules",
