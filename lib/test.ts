@@ -1,20 +1,21 @@
-import { test } from 'qunit';
-import { TodoState, Todo } from './types';
+import { test, Assert } from 'qunit';
+import { TodoState, Todo, UpdateFunction, MountFunction, ViewFunction, EmptyFunction } from './types';
 
 const id: string = 'test-app';
 
-declare function update(action: string, model: TodoState, data?: any): TodoState;
-declare function mount(model: TodoState, update: Function, view: Function, id: string): void;
-declare function view(model: TodoState, signal: Function): HTMLElement;
-declare function empty(element: HTMLElement): void;
+declare const update: UpdateFunction;
+declare const mount: MountFunction;
+declare const view: ViewFunction;
+declare const empty: EmptyFunction;
 
-test('update("", {todos:[]}) returns {todos:[]} (current state unmodified)',
-    (assert: Assert) => {
+type TestFunction = (assert: Assert) => void;
+
+test('update("", {todos:[]}) returns {todos:[]} (current state unmodified)', (assert) => {
   const result = update('', { todos: [], hash: '#/' });
   assert.deepEqual(result, { todos: [], hash: '#/' });
 });
 
-test('Test Add Todo: update("ADD", model, "New Todo") adds a new todo', (assert: Assert) => {
+test('Test Add Todo: update("ADD", model, "New Todo") adds a new todo', (assert) => {
   const initialState: TodoState = { todos: [], hash: '#/' };
   const result = update('ADD', initialState, 'New Todo');
   assert.equal(result.todos.length, 1);
@@ -22,7 +23,7 @@ test('Test Add Todo: update("ADD", model, "New Todo") adds a new todo', (assert:
   assert.equal(result.todos[0].done, false);
 });
 
-test('Test Toggle Todo: update("TOGGLE", model, id) toggles todo status', (assert: Assert) => {
+test('Test Toggle Todo: update("TOGGLE", model, id) toggles todo status', (assert) => {
   const initialState: TodoState = {
     todos: [{ id: 1, title: 'Test Todo', done: false }],
     hash: '#/'
@@ -31,7 +32,7 @@ test('Test Toggle Todo: update("TOGGLE", model, id) toggles todo status', (asser
   assert.equal(result.todos[0].done, true);
 });
 
-test('Test Delete Todo: update("DELETE", model, id) removes a todo', (assert: Assert) => {
+test('Test Delete Todo: update("DELETE", model, id) removes a todo', (assert) => {
   const initialState: TodoState = {
     todos: [{ id: 1, title: 'Test Todo', done: false }],
     hash: '#/'
@@ -40,15 +41,15 @@ test('Test Delete Todo: update("DELETE", model, id) removes a todo', (assert: As
   assert.equal(result.todos.length, 0);
 });
 
-test('mount sets initial state correctly', (assert: Assert) => {
+test('mount sets initial state correctly', (assert) => {
   const initialState: TodoState = { todos: [{ id: 1, title: 'Test Todo', done: false }], hash: '#/' };
   mount(initialState, update, view, id);
   const todoElement = document.querySelector('.todo-list li');
-  assert.ok(todoElement, 'Todo element should be present');
+  assert.ok(todoElement !== null, 'Todo element should be present');
   assert.equal(todoElement?.textContent?.trim(), 'Test Todo', 'Todo title should be correct');
 });
 
-test('empty("test-app") should clear DOM in root node', (assert: Assert) => {
+test('empty("test-app") should clear DOM in root node', (assert) => {
   const rootElement = document.getElementById(id);
   if (rootElement) {
     empty(rootElement);
@@ -58,7 +59,7 @@ test('empty("test-app") should clear DOM in root node', (assert: Assert) => {
   }
 });
 
-test('Adding a new todo updates the view', (assert: Assert) => {
+test('Adding a new todo updates the view', (assert) => {
   const initialState: TodoState = { todos: [], hash: '#/' };
   mount(initialState, update, view, id);
 
@@ -71,7 +72,7 @@ test('Adding a new todo updates the view', (assert: Assert) => {
   assert.equal(todoItems[0].textContent?.trim(), 'New Todo Item', 'Todo item text should be correct');
 });
 
-test('Toggling a todo updates its status', (assert: Assert) => {
+test('Toggling a todo updates its status', (assert) => {
   const initialState: TodoState = {
     todos: [{ id: 1, title: 'Test Todo', done: false }],
     hash: '#/'
@@ -85,7 +86,7 @@ test('Toggling a todo updates its status', (assert: Assert) => {
   assert.ok(todoItem?.classList.contains('completed'), 'Todo item should be marked as completed');
 });
 
-test('Deleting a todo removes it from the view', (assert: Assert) => {
+test('Deleting a todo removes it from the view', (assert) => {
   const initialState: TodoState = {
     todos: [{ id: 1, title: 'Test Todo', done: false }],
     hash: '#/'
