@@ -1,25 +1,28 @@
-var id = 'test-app';
+import { test, assert } from 'qunit';
+import { update } from './todo-app';
+
+const id: string = 'test-app';
 
 test('update({counters:[0]}) returns {counters:[0]} (current state unmodified)',
-    function(assert) {
-  var result = update({counters:[0]});
+    (assert: Assert) => {
+  const result = update({counters:[0]});
   assert.equal(result.counters[0], 0);
 });
 
-test('Test Update increment: update(1, "inc") returns 2', function(assert) {
-  var result = update({counters: [1] }, "inc");
+test('Test Update increment: update(1, "inc") returns 2', (assert: Assert) => {
+  const result = update({counters: [1] }, "inc");
   console.log('result', result);
   assert.equal(result.counters[0], 2);
 });
 
 
-test('Test Update decrement: update(1, "dec") returns 0', function(assert) {
-  var result = update({counters: [1] }, "dec");
+test('Test Update decrement: update(1, "dec") returns 0', (assert: Assert) => {
+  const result = update({counters: [1] }, "dec");
   assert.equal(result.counters[0], 0);
 });
 
-test('Test negative state: update(-9, "inc") returns -8', function(assert) {
-  var result = update({counters: [-9] }, "inc");
+test('Test negative state: update(-9, "inc") returns -8', (assert: Assert) => {
+  const result = update({counters: [-9] }, "inc");
   assert.equal(result.counters[0], -8);
 });
 
