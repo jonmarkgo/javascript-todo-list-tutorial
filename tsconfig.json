@@ -3,7 +3,7 @@
     /* Language and Environment */
     "target": "ES2018",
     "lib": ["dom", "es2018"],
-    "module": "CommonJS",
+    "module": "commonjs",
 
     /* Paths */
     "rootDir": ".",
@@ -27,7 +27,8 @@
     "skipLibCheck": true,
 
     /* Additional Options */
-    "types": ["jest"]
+    "types": ["jest"],
+    "resolveJsonModule": true
   },
   "include": [
     "src/**/*",
