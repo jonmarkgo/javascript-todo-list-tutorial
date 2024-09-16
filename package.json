@@ -17,15 +17,20 @@
     "nyc": "^15.1.0",
     "pre-commit": "^1.2.2",
     "tap-nyc": "^1.0.3",
-    "tape": "^5.0.1"
+    "tape": "^5.0.1",
+    "typescript": "^4.9.5",
+    "ts-node": "^10.9.1",
+    "@types/tape": "^4.13.2"
   },
   "scripts": {
     "check-coverage": "nyc check-coverage --statements 100 --functions 100 --lines 100 --branches 100",
     "postinstall": "npm test",
-    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
-    "start": "node lib/server.js",
+    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.ts",
+    "start": "ts-node lib/server.ts",
     "dev": "live-server",
-    "test": "nyc tape ./test/*.test.js | tap-nyc"
+    "test": "nyc ts-node tape ./test/*.test.ts | tap-nyc",
+    "build": "tsc",
+    "lint": "eslint . --ext .ts"
   },
   "keywords": [
     "Todo List",
@@ -41,6 +46,7 @@
   ],
   "license": "ISC",
   "pre-commit": [
+    "lint",
     "test",
     "check-coverage"
   ]
