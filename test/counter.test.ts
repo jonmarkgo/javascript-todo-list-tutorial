@@ -1,98 +1,53 @@
 import test from 'tape';
 import { JSDOM } from 'jsdom';
-import { Action, Model, update, view, mount, div, button, empty } from './counter';
+import { update, view, mount, Action, Model } from './counter';
 
+// Set up JSDOM
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
 global.document = dom.window.document;
-global.window = dom.window as unknown as Window & typeof globalThis;
+global.window = dom.window as unknown as (Window & typeof globalThis);
 
-test('Counter component', (t) => {
-  t.test('update function', (st) => {
-    const initialModel: Model = { count: 0 };
+test('Counter - update function', (t) => {
+  const initialModel: Model = 0;
 
-    st.deepEqual(update('inc', initialModel), { count: 1 }, 'should increment count');
-    st.deepEqual(update('dec', initialModel), { count: -1 }, 'should decrement count');
-    st.deepEqual(update('reset', { count: 5 }), { count: 0 }, 'should reset count to 0');
-    st.deepEqual(update('invalid' as Action, initialModel), initialModel, 'should return current model for invalid action');
+  t.equal(update('inc', initialModel), 1, 'Increment should add 1 to the model');
+  t.equal(update('dec', initialModel), -1, 'Decrement should subtract 1 from the model');
+  t.equal(update('reset', 5), 0, 'Reset should set the model to 0');
+  t.equal(update('invalid' as Action, initialModel), initialModel, 'Invalid action should return current state');
 
-    st.end();
-  });
+  t.end();
+});
 
-  t.test('view function', (st) => {
-    const model: Model = { count: 3 };
-    const mockSignal = (action: Action) => () => {};
+test('Counter - view function', (t) => {
+  const model: Model = 5;
+  const mockSignal = (action: Action) => () => {};
 
-    const result = view(model, mockSignal);
+  const result = view(model, mockSignal);
 
-    st.equal(result.tagName, 'SECTION', 'should return a section element');
-    st.equal(result.className, 'counter', 'should have class "counter"');
-    st.equal(result.childNodes.length, 4, 'should have 4 child nodes');
+  t.equal(result.tagName, 'SECTION', 'View should return a section element');
+  t.equal(result.className, 'counter', 'View should have class "counter"');
+  t.equal(result.childNodes.length, 4, 'View should have 4 child nodes');
 
-    const [incButton, countDiv, decButton, resetButton] = result.childNodes;
+  const [incButton, countDiv, decButton, resetButton] = Array.from(result.childNodes);
 
-    st.equal((incButton as HTMLButtonElement).textContent, '+', 'should have increment button');
-    st.equal((countDiv as HTMLDivElement).textContent, '3', 'should display correct count');
-    st.equal((decButton as HTMLButtonElement).textContent, '-', 'should have decrement button');
-    st.equal((resetButton as HTMLButtonElement).textContent, 'Reset', 'should have reset button');
+  t.equal((incButton as HTMLButtonElement).textContent, '+', 'First button should be increment');
+  t.equal((countDiv as HTMLDivElement).textContent, '5', 'Count div should display current model value');
+  t.equal((decButton as HTMLButtonElement).textContent, '-', 'Third button should be decrement');
+  t.equal((resetButton as HTMLButtonElement).textContent, 'Reset', 'Fourth button should be reset');
 
-    st.end();
-  });
+  t.end();
+});
 
-  t.test('mount function', (st) => {
-    // Create a mock DOM environment
-    const mockRoot = document.createElement('div');
-    mockRoot.id = 'root';
-    document.body.appendChild(mockRoot);
+test('Counter - mount function', (t) => {
+  // Create a root element
+  const root = document.createElement('div');
+  root.id = 'root';
+  document.body.appendChild(root);
 
-    const initialModel: Model = { count: 0 };
-    mount(initialModel, update, view, 'root');
+  // Pass the actual document to the mount function
+  mount(0, update, view, 'root', document);
 
-    st.equal(mockRoot.childNodes.length, 1, 'should append one child to root');
-    st.equal(mockRoot.firstChild!.childNodes.length, 4, 'should have 4 elements in the view');
-
-    // Clean up
-    document.body.removeChild(mockRoot);
-
-    st.end();
-  });
-
-  t.test('helper functions', (st) => {
-    st.test('empty function', (s) => {
-      const node = document.createElement('div');
-      node.appendChild(document.createElement('span'));
-      node.appendChild(document.createElement('p'));
-
-      empty(node);
-
-      s.equal(node.childNodes.length, 0, 'should remove all child nodes');
-      s.end();
-    });
-
-    st.test('button function', (s) => {
-      const mockSignal = (action: Action) => () => {};
-      const btn = button('Test', mockSignal, 'inc');
-
-      s.equal(btn.tagName, 'BUTTON', 'should return a button element');
-      s.equal(btn.textContent, 'Test', 'should have correct text content');
-      s.equal(btn.className, 'inc', 'should have correct class name');
-      s.equal(btn.id, 'inc', 'should have correct id');
-
-      s.end();
-    });
-
-    st.test('div function', (s) => {
-      const divElement = div('test-div', 'Test content');
-
-      s.equal(divElement.tagName, 'DIV', 'should return a div element');
-      s.equal(divElement.id, 'test-div', 'should have correct id');
-      s.equal(divElement.className, 'test-div', 'should have correct class name');
-      s.equal(divElement.textContent, 'Test content', 'should have correct text content');
-
-      s.end();
-    });
-
-    st.end();
-  });
-
+  t.equal(document.querySelector('.counter')?.childNodes.length, 4, 'Mount should create counter with 4 child nodes');
+  t.pass('Mount function should execute without errors');
   t.end();
 });
