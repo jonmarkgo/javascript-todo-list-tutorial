@@ -15,42 +15,50 @@ function empty(node: HTMLElement): void {
 
 /**
  * `mount` mounts the app in the "root" DOM Element.
- * @param {Object} model store of the application's state.
+ * @param {T} initialModel initial store of the application's state.
  * @param {Function} update how the application state is updated ("controller")
  * @param {Function} view function that renders HTML/DOM elements with model.
  * @param {string} root_element_id root DOM element in which the app is mounted
  * @param {Function} subscriptions any event listeners the application needs
  */
 function mount<T>(
-  model: T,
+  initialModel: T,
   update: (action: string, model: T, data?: any) => T,
-  view: (model: T, signal: (action: string, data?: any) => () => void) => HTMLElement,
+  view: (model: T, signal: (action: string, data?: any) => void) => HTMLElement,
   root_element_id: string,
-  subscriptions?: (signal: (action: string, data?: any) => () => void) => void
+  subscriptions?: (signal: (action: string, data?: any) => void) => void
 ): void {
-  const ROOT = document.getElementById(root_element_id); // root DOM element
+  const ROOT = document.getElementById(root_element_id);
   if (!ROOT) throw new Error(`Root element with id ${root_element_id} not found`);
 
-  const store_name = 'todos-elmish_' + root_element_id; // test-app !== app
+  const store_name = 'todos-elmish_' + root_element_id;
 
-  function render(mod: T, sig: (action: string, data?: any) => () => void, root: HTMLElement): void {
-    localStorage.setItem(store_name, JSON.stringify(mod)); // save the model!
-    empty(root); // clear root element (container) before (re)rendering
-    root.appendChild(view(mod, sig)); // render view based on model & signal
+  function render(mod: T, sig: (action: string, data?: any) => void, root: HTMLElement): void {
+    empty(root);
+    root.appendChild(view(mod, sig));
   }
 
-  function signal(action: string, data?: any): () => void {
-    return function callback(): void {
-      const storedModel = localStorage.getItem(store_name);
-      model = storedModel ? JSON.parse(storedModel) : model;
-      const updatedModel = update(action, model, data); // update model for action
-      render(updatedModel, signal, ROOT as HTMLElement);
-    };
+  let currentModel: T;
+
+  function signal(action: string, data?: any): void {
+    const updatedModel = update(action, currentModel, data);
+    currentModel = updatedModel;
+    localStorage.setItem(store_name, JSON.stringify(currentModel));
+    if (ROOT) {
+      render(currentModel, signal, ROOT);
+    }
   }
 
+  // Initialize the model from localStorage or use the initial model
   const storedModel = localStorage.getItem(store_name);
-  model = storedModel ? JSON.parse(storedModel) : model;
-  render(model, signal, ROOT as HTMLElement);
+  currentModel = storedModel ? JSON.parse(storedModel) : initialModel;
+
+  // Initial render
+  render(currentModel, signal, ROOT);
+
+  // Save initial state to localStorage
+  localStorage.setItem(store_name, JSON.stringify(currentModel));
+
   if (subscriptions && typeof subscriptions === 'function') {
     subscriptions(signal);
   }
