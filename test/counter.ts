@@ -1,63 +1,85 @@
+// this file is borrowed from:
+// https://github.com/dwyl/learn-elm-architecture-in-javascript/blob/master/examples/counter-reset/counter.js
+// it is included here purely for testing the "elmish" functions.
+
 // Define the Component's Actions:
-export type Action = 'inc' | 'dec' | 'reset';
+const Inc = 'inc';                     // increment the counter
+const Dec = 'dec';                     // decrement the counter
+const Res = 'reset';                   // reset counter: git.io/v9KJk
+
+export type Action = typeof Inc | typeof Dec | typeof Res;
 export type Model = number;
 
 export function update(action: Action, model: Model): Model {
-    switch (action) {
-        case 'inc': return model + 1; // add 1 to the model
-        case 'dec': return model - 1; // subtract 1 from model
-        case 'reset': return 0; // reset state to 0 (Zero)
-        default: return model; // if no action, return current state.
-    }
+  switch(action) {                   // and an action (String) runs a switch
+    case Inc: return model + 1;      // add 1 to the model
+    case Dec: return model - 1;      // subtract 1 from model
+    case Res: return 0;              // reset state to 0 (Zero) git.io/v9KJk
+    default: return model;           // if no action, return current state.
+  }                                  // (default action always returns current)
 }
 
-export function view(model: Model, signal: (action: Action) => () => void): HTMLElement {
-    return container([
-        button('+', signal('inc')),
-        div('count', model.toString()),
-        button('-', signal('dec')),
-        button('Reset', signal('reset'))
-    ]);
+type Signal = (action: Action) => () => void;
+
+export function view(model: Model, signal: Signal): HTMLElement {
+  return container([                           // Store DOM nodes in an array
+    button('+', signal, Inc),                  // then iterate to append them
+    div('count', model.toString()),            // create div with stat as text
+    button('-', signal, Dec),                  // decrement counter
+    button('Reset', signal, Res)               // reset counter
+  ]); // forEach is ES5 so IE9+
+} // yes, for loop is "faster" than forEach, but readability trumps "perf" here!
+
+// Mount Function receives all MUV and mounts the app in the "root" DOM Element
+export function mount(model: Model, update: (action: Action, model: Model) => Model, view: (model: Model, signal: Signal) => HTMLElement, root_element_id: string): void {
+  const root = document.getElementById(root_element_id); // root DOM element
+  if (!root) throw new Error(`Element with id ${root_element_id} not found`);
+
+  function signal(action: Action): () => void {
+    return function callback() {     // and returns callback
+      model = update(action, model); // update model according to action
+      empty(root);
+      root.appendChild(view(model, signal)); // subsequent re-rendering
+    };
+  }
+  root.appendChild(view(model, signal));    // render initial model (once)
 }
 
-export function mount(model: Model, update: (action: Action, model: Model) => Model, view: (model: Model, signal: (action: Action) => () => void) => HTMLElement, root_element_id: string, doc: Document = document): void {
-    const root = doc.getElementById(root_element_id);
-    if (!root) throw new Error(`Element with id ${root_element_id} not found`);
+// The following are "Helper" Functions which each "Do ONLY One Thing" and are
+// used in the "View" function to render the Model (State) to the Browser DOM:
 
-    function signal(action: Action) {
-        return function callback() {
-            model = update(action, model);
-            empty(root!);
-            root!.appendChild(view(model, signal));
-        };
-    }
-    root.appendChild(view(model, signal));
+// empty the contents of a given DOM element "node" (before re-rendering)
+export function empty(node: HTMLElement): void {
+  while (node.firstChild) {
+    node.removeChild(node.firstChild);
+  }
+} // Inspired by: stackoverflow.com/a/3955238/1148249
+
+export function button(text: string, signal: Signal, action: Action): HTMLButtonElement {
+  const button = document.createElement('button');
+  const textNode = document.createTextNode(text);    // human-readable button text
+  button.appendChild(textNode);                    // text goes *inside* not attrib
+  button.className = action;                   // use action as CSS class
+  button.id = action;
+  button.onclick = signal(action);             // onclick tells how to process
+  return button;                               // return the DOM node(s)
+} // how to create a button in JavaScript: stackoverflow.com/a/8650996/1148249
+
+export function div(divid: string, text?: string): HTMLDivElement {
+  const div = document.createElement('div');
+  div.id = divid;
+  div.className = divid;
+  if(text !== undefined) { // if text is passed in render it in a "Text Node"
+    const txt = document.createTextNode(text);
+    div.appendChild(txt);
+  }
+  return div;
 }
 
-function empty(node: HTMLElement): void {
-    while (node.firstChild) {
-        node.removeChild(node.firstChild);
-    }
-}
-
-function button(text: string, onclick: () => void): HTMLButtonElement {
-    const button = document.createElement('button');
-    button.textContent = text;
-    button.onclick = onclick;
-    return button;
-}
-
-function div(divid: string, text: string): HTMLDivElement {
-    const div = document.createElement('div');
-    div.id = divid;
-    div.className = divid;
-    div.textContent = text;
-    return div;
-}
-
+// https://developer.mozilla.org/en-US/docs/Web/HTML/Element/section
 function container(elements: HTMLElement[]): HTMLElement {
-    const con = document.createElement('section');
-    con.className = 'counter';
-    elements.forEach((el) => con.appendChild(el));
-    return con;
+  const con = document.createElement('section');
+  con.className = 'counter';
+  elements.forEach(function(el) { con.appendChild(el) });
+  return con;
 }
