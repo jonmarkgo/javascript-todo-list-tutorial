@@ -25,16 +25,18 @@
     "tape": "^5.0.1",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "eslint": "^8.0.0"
   },
   "scripts": {
     "build": "tsc",
     "postinstall": "npm test",
     "retest": "PORT=8000 node_modules/.bin/nodemon -e ts --exec ts-node ./test/*.test.ts",
-    "start": "node lib/server.js",
+    "start": "ts-node lib/server.ts",
     "dev": "live-server",
     "test": "jest",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "lint": "eslint . --ext .ts"
   },
   "keywords": [
     "Todo List",
@@ -51,6 +53,7 @@
   "license": "ISC",
   "pre-commit": [
     "type-check",
+    "lint",
     "test"
   ],
   "dependencies": {
