@@ -1,77 +1,100 @@
-import { test, assert } from 'qunit';
-import { update } from './todo-app';
+import { test } from 'qunit';
+import { TodoState, Todo } from './types';
 
 const id: string = 'test-app';
 
-test('update({counters:[0]}) returns {counters:[0]} (current state unmodified)',
+declare function update(action: string, model: TodoState, data?: any): TodoState;
+declare function mount(model: TodoState, update: Function, view: Function, id: string): void;
+declare function view(model: TodoState, signal: Function): HTMLElement;
+declare function empty(element: HTMLElement): void;
+
+test('update("", {todos:[]}) returns {todos:[]} (current state unmodified)',
     (assert: Assert) => {
-  const result = update({counters:[0]});
-  assert.equal(result.counters[0], 0);
+  const result = update('', { todos: [], hash: '#/' });
+  assert.deepEqual(result, { todos: [], hash: '#/' });
 });
 
-test('Test Update increment: update(1, "inc") returns 2', (assert: Assert) => {
-  const result = update({counters: [1] }, "inc");
-  console.log('result', result);
-  assert.equal(result.counters[0], 2);
+test('Test Add Todo: update("ADD", model, "New Todo") adds a new todo', (assert: Assert) => {
+  const initialState: TodoState = { todos: [], hash: '#/' };
+  const result = update('ADD', initialState, 'New Todo');
+  assert.equal(result.todos.length, 1);
+  assert.equal(result.todos[0].title, 'New Todo');
+  assert.equal(result.todos[0].done, false);
 });
 
-
-test('Test Update decrement: update(1, "dec") returns 0', (assert: Assert) => {
-  const result = update({counters: [1] }, "dec");
-  assert.equal(result.counters[0], 0);
+test('Test Toggle Todo: update("TOGGLE", model, id) toggles todo status', (assert: Assert) => {
+  const initialState: TodoState = {
+    todos: [{ id: 1, title: 'Test Todo', done: false }],
+    hash: '#/'
+  };
+  const result = update('TOGGLE', initialState, 1);
+  assert.equal(result.todos[0].done, true);
 });
 
-test('Test negative state: update(-9, "inc") returns -8', (assert: Assert) => {
-  const result = update({counters: [-9] }, "inc");
-  assert.equal(result.counters[0], -8);
+test('Test Delete Todo: update("DELETE", model, id) removes a todo', (assert: Assert) => {
+  const initialState: TodoState = {
+    todos: [{ id: 1, title: 'Test Todo', done: false }],
+    hash: '#/'
+  };
+  const result = update('DELETE', initialState, 1);
+  assert.equal(result.todos.length, 0);
 });
 
-test('mount({model: 7, update: update, view: view}, "'
-  + id +'") sets initial state to 7', function(assert) {
-  mount({counters:[7]}, update, view, id);
-  var state = document.getElementById(id)
-    .getElementsByClassName('count')[0].textContent;
-  assert.equal(state, 7);
+test('mount sets initial state correctly', (assert: Assert) => {
+  const initialState: TodoState = { todos: [{ id: 1, title: 'Test Todo', done: false }], hash: '#/' };
+  mount(initialState, update, view, id);
+  const todoElement = document.querySelector('.todo-list li');
+  assert.ok(todoElement, 'Todo element should be present');
+  assert.equal(todoElement?.textContent?.trim(), 'Test Todo', 'Todo title should be correct');
 });
 
-test('empty("test-app") should clear DOM in root node', function(assert) {
-  empty(document.getElementById(id));
-  mount({counters:[7]}, update, view, id);
-  empty(document.getElementById(id));
-  var result = document.getElementById(id).innerHtml
-  assert.equal(result, undefined);
+test('empty("test-app") should clear DOM in root node', (assert: Assert) => {
+  const rootElement = document.getElementById(id);
+  if (rootElement) {
+    empty(rootElement);
+    assert.equal(rootElement.children.length, 0, 'Root element should be empty');
+  } else {
+    assert.ok(false, 'Root element not found');
+  }
 });
 
-test('click on "+" button to re-render state (increment model by 1)',
-function(assert) {
-  document.body.appendChild(div(id));
-  mount({counters:[7]}, update, view, id);
-  document.getElementById(id).getElementsByClassName('inc')[0].click();
-  var state = document.getElementById(id)
-    .getElementsByClassName('count')[0].textContent;
-  assert.equal(state, 8); // model was incremented successfully
-  empty(document.getElementById(id)); // clean up after tests
+test('Adding a new todo updates the view', (assert: Assert) => {
+  const initialState: TodoState = { todos: [], hash: '#/' };
+  mount(initialState, update, view, id);
+
+  const newTodoInput = document.getElementById('new-todo') as HTMLInputElement;
+  newTodoInput.value = 'New Todo Item';
+  newTodoInput.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter' }));
+
+  const todoItems = document.querySelectorAll('.todo-list li');
+  assert.equal(todoItems.length, 1, 'One todo item should be added');
+  assert.equal(todoItems[0].textContent?.trim(), 'New Todo Item', 'Todo item text should be correct');
 });
 
-// Reset Functionality
+test('Toggling a todo updates its status', (assert: Assert) => {
+  const initialState: TodoState = {
+    todos: [{ id: 1, title: 'Test Todo', done: false }],
+    hash: '#/'
+  };
+  mount(initialState, update, view, id);
 
-test('Test reset counter when model/state is 6 returns 0', function(assert) {
-  var result = update({counters:[7]}, "reset");
-  assert.equal(result.counters[0], 0);
+  const toggleCheckbox = document.querySelector('.toggle') as HTMLInputElement;
+  toggleCheckbox.click();
+
+  const todoItem = document.querySelector('.todo-list li');
+  assert.ok(todoItem?.classList.contains('completed'), 'Todo item should be marked as completed');
 });
 
-test('reset button should be present on page', function(assert) {
-  var reset = document.getElementsByClassName('reset');
-  assert.equal(reset.length, 3);
-});
+test('Deleting a todo removes it from the view', (assert: Assert) => {
+  const initialState: TodoState = {
+    todos: [{ id: 1, title: 'Test Todo', done: false }],
+    hash: '#/'
+  };
+  mount(initialState, update, view, id);
 
-test('Click reset button resets state to 0', function(assert) {
-  mount({counters:[7]}, update, view, id);
-  var root = document.getElementById(id);
-  assert.equal(root.getElementsByClassName('count')[0].textContent, 7);
-  var btn = root.getElementsByClassName("reset")[0]; // click reset button
-  btn.click(); // Click the Reset button!
-  var state = root.getElementsByClassName('count')[0].textContent;
-  assert.equal(state, 0); // state was successfully reset to 0!
-  empty(root); // clean up after tests
+  const deleteButton = document.querySelector('.destroy') as HTMLButtonElement;
+  deleteButton.click();
+
+  const todoItems = document.querySelectorAll('.todo-list li');
+  assert.equal(todoItems.length, 0, 'Todo item should be removed');
 });
