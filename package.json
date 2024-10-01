@@ -31,7 +31,7 @@
     "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
     "start": "node lib/server.mjs",
     "dev": "live-server",
-    "test": "npm run compile && nyc tape -r esm ./test/*.test.ts | tap-nyc"
+    "test": "npm run compile && nyc ts-node ./test/*.test.ts | tap-nyc"
   },
   "keywords": [
     "Todo List",
