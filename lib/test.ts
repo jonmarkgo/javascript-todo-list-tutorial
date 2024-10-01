@@ -13,7 +13,7 @@ type Action = 'inc' | 'dec' | 'reset';
 declare function test(name: string, callback: (assert: Assert) => void): void;
 declare function update(model: Model, action?: Action): Model;
 declare function mount(model: Model, update: (model: Model, action?: Action) => Model, id: string): void;
-declare function empty(element: HTMLElement | null): void;
+declare function empty(node: HTMLElement): void;
 declare function div(id: string): HTMLElement;
 
 test('update({counters:[0]}) returns {counters:[0]} (current state unmodified)',
@@ -47,9 +47,11 @@ test('mount({model: 7, update: update}, "'
 });
 
 test('empty("test-app") should clear DOM in root node', function(assert: Assert) {
-  empty(document.getElementById(id));
+  const element = document.getElementById(id);
+  if (element) empty(element);
   mount({counters:[7]}, update, id);
-  empty(document.getElementById(id));
+  const newElement = document.getElementById(id);
+  if (newElement) empty(newElement);
   const result: string | undefined = document.getElementById(id)?.innerHTML;
   assert.equal(result, undefined);
 });
@@ -62,7 +64,8 @@ function(assert: Assert) {
   const state: string | null | undefined = document.getElementById(id)
     ?.getElementsByClassName('count')[0].textContent;
   assert.equal(state, 8); // model was incremented successfully
-  empty(document.getElementById(id)); // clean up after tests
+  const element = document.getElementById(id);
+  if (element) empty(element); // clean up after tests
 });
 
 // Reset Functionality
@@ -85,5 +88,5 @@ test('Click reset button resets state to 0', function(assert: Assert) {
   (btn as HTMLElement)?.click(); // Click the Reset button!
   const state: string | null | undefined = root?.getElementsByClassName('count')[0].textContent;
   assert.equal(state, 0); // state was successfully reset to 0!
-  empty(root); // clean up after tests
+  if (root) empty(root); // clean up after tests
 });
