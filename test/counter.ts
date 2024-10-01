@@ -7,10 +7,10 @@ const Inc = 'inc';                     // increment the counter
 const Dec = 'dec';                     // decrement the counter
 const Res = 'reset';                   // reset counter: git.io/v9KJk
 
-type Action = typeof Inc | typeof Dec | typeof Res;
-type Model = number;
+type SimpleCounterAction = typeof Inc | typeof Dec | typeof Res;
+type SimpleCounterModel = number;
 
-function update(action: Action, model: Model): Model {     // Update function takes the current state
+function updateSimpleCounter(action: SimpleCounterAction, model: SimpleCounterModel): SimpleCounterModel {     // Update function takes the current state
   switch(action) {                   // and an action (String) runs a switch
     case Inc: return model + 1;      // add 1 to the model
     case Dec: return model - 1;      // subtract 1 from model
@@ -19,9 +19,9 @@ function update(action: Action, model: Model): Model {     // Update function ta
   }                                  // (default action always returns current)
 }
 
-type Signal = (action: Action) => () => void;
+type SimpleCounterSignal = (action: SimpleCounterAction) => () => void;
 
-function view(model: Model, signal: Signal): HTMLElement {
+function viewSimpleCounter(model: SimpleCounterModel, signal: SimpleCounterSignal): HTMLElement {
   return container([                           // Store DOM nodes in an array
     button('+', signal, Inc),                  // then iterate to append them
     div('count', model.toString()),            // create div with stat as text
@@ -31,14 +31,16 @@ function view(model: Model, signal: Signal): HTMLElement {
 } // yes, for loop is "faster" than forEach, but readability trumps "perf" here!
 
 // Mount Function receives all MUV and mounts the app in the "root" DOM Element
-function mount(model: Model, update: (action: Action, model: Model) => Model, view: (model: Model, signal: Signal) => HTMLElement, root_element_id: string): void {
+function mountCounter(model: SimpleCounterModel, update: (action: SimpleCounterAction, model: SimpleCounterModel) => SimpleCounterModel, view: (model: SimpleCounterModel, signal: SimpleCounterSignal) => HTMLElement, root_element_id: string): void {
   const root = document.getElementById(root_element_id); // root DOM element
   if (!root) return;
-  function signal(action: Action): () => void {          // signal function takes action
+  function signal(action: SimpleCounterAction): () => void {          // signal function takes action
     return function callback(): void {     // and returns callback
       model = update(action, model); // update model according to action
-      empty(root);
-      root.appendChild(view(model, signal)); // subsequent re-rendering
+      if (root) {
+        empty(root);
+        root.appendChild(view(model, signal)); // subsequent re-rendering
+      }
     };
   };
   root.appendChild(view(model, signal));    // render initial model (once)
@@ -54,7 +56,7 @@ function empty(node: HTMLElement): void {
   }
 } // Inspired by: stackoverflow.com/a/3955238/1148249
 
-function button(text: string, signal: Signal, action: Action): HTMLButtonElement {
+function button(text: string, signal: SimpleCounterSignal, action: SimpleCounterAction): HTMLButtonElement {
   const button = document.createElement('button');
   const textNode = document.createTextNode(text);    // human-readable button text
   button.appendChild(textNode);                    // text goes *inside* not attrib
@@ -88,9 +90,9 @@ function container(elements: HTMLElement[]): HTMLElement {
 /* istanbul ignore else */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    view,
-    mount,
-    update,
+    viewSimpleCounter,
+    mountCounter,
+    updateSimpleCounter,
     div,
     button,
     empty,

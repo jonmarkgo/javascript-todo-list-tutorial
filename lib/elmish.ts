@@ -21,8 +21,8 @@ export function empty (node: HTMLElement): void {
  * @param {String} root_element_id root DOM element in which the app is mounted
  * @param {Function} subscriptions any event listeners the application needs
  */
-export function mount<T> (
-  model: T,
+export function mount<T extends { todos: any[], hash: string }> (
+  initial_model: T,
   update: (action: string, model: T, data?: any) => T,
   view: (model: T, signal: SignalFunction<T>) => HTMLElement,
   root_element_id: string,
@@ -38,9 +38,10 @@ export function mount<T> (
     root.appendChild(view(mod, sig)) // render view based on model & signal
   }
 
-  function signal(action: string, data?: any, model?: T): () => void {
+  function signal(action: string, data?: any): () => void {
     return function callback(): void {
-      model = JSON.parse(localStorage.getItem(store_name) || '{}') as T;
+      const model = getStoredModel();
+      console.log('Model before update:', JSON.stringify(model, null, 2));
       const updatedModel = update(action, model, data); // update model for action
       if (ROOT) {
         render(updatedModel, signal, ROOT);
@@ -48,7 +49,40 @@ export function mount<T> (
     };
   }
 
-  model = JSON.parse(localStorage.getItem(store_name) || '{}') as T || model;
+  function getStoredModel(): T {
+    const storedModel = localStorage.getItem(store_name);
+    let model: T = JSON.parse(JSON.stringify(initial_model)); // Deep clone initial_model
+
+    if (storedModel) {
+      try {
+        const parsedModel = JSON.parse(storedModel) as Partial<T>;
+        // Merge parsed model with initial_model, ensuring correct structure
+        if (parsedModel && typeof parsedModel === 'object' && !Array.isArray(parsedModel)) {
+          for (const key in parsedModel) {
+            if (key in model) {
+              (model as any)[key] = parsedModel[key];
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing stored model:', error);
+      }
+    }
+
+    // Ensure the model has the correct structure
+    if (!Array.isArray(model.todos)) {
+      model.todos = [];
+    }
+    if (typeof model.hash !== 'string') {
+      model.hash = "#/";
+    }
+
+    console.log('Model after initialization:', JSON.stringify(model, null, 2));
+    return model;
+  }
+
+  const model = getStoredModel();
+
   if (ROOT) {
     render(model, signal, ROOT);
   }

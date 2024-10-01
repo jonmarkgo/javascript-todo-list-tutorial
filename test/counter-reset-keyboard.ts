@@ -5,14 +5,16 @@
 /* if require is available, it means we are in Node.js Land i.e. testing!
  in the broweser, the "elmish" DOM functions are loaded in a <script> tag */
 /* istanbul ignore next */
-if (typeof require !== 'undefined' && this.window !== this) {
-  var { button, div, empty, mount, text } = require('../lib/elmish.js');
+if (typeof require !== 'undefined' && typeof window === 'undefined') {
+  const elmish = require('../lib/elmish.js');
 }
 
-type Model = number;
-type Action = 'inc' | 'dec' | 'reset';
+import * as elmish from '../lib/elmish';
 
-function update (action: Action, model: Model): Model {    // Update function takes the current state
+type ResetCounterModel = number;
+type ResetCounterAction = 'inc' | 'dec' | 'reset';
+
+function update (action: ResetCounterAction, model: ResetCounterModel): ResetCounterModel {    // Update function takes the current state
   switch(action) {                   // and an action (String) runs a switch
     case 'inc': return model + 1;    // add 1 to the model
     case 'dec': return model - 1;    // subtract 1 from model
@@ -21,28 +23,28 @@ function update (action: Action, model: Model): Model {    // Update function ta
   }                                  // (default action always returns current)
 }
 
-type Signal = (action: Action) => () => void;
+type ResetCounterSignal = (action: ResetCounterAction) => (event: Event) => void;
 
-function view (model: Model, signal: Signal): HTMLElement {
-  return div([], [
-    button(["class=inc", "id=inc", signal('inc')], [text('+')]), // increment
-    div(["class=count", "id=count"], [text(model.toString())]), // count
-    button(["class=dec", "id=dec", signal('dec')], [text('-')]), // decrement
-    button(["class=reset", "id=reset", signal('reset')], [text('Reset')])
+function view (model: ResetCounterModel, signal: ResetCounterSignal): HTMLElement {
+  return elmish.div(['counter'], [
+    elmish.button(['+', (e: Event) => signal('inc')(e)], []), // increment
+    elmish.div(['count'], [(() => { const span = document.createElement('span'); span.appendChild(document.createTextNode(model.toString())); return span; })()]), // count
+    elmish.button(['-', (e: Event) => signal('dec')(e)], []), // decrement
+    elmish.button(['Reset', (e: Event) => signal('reset')(e)], [])
   ]);
 }
 
-function subscriptions (signal: Signal): void {
+function subscriptions (signal: ResetCounterSignal): void {
   const UP_KEY = 38; // increment the counter when [↑] (up) key is pressed
   const DOWN_KEY = 40; // decrement the counter when [↓] (down) key is pressed
 
   document.addEventListener('keyup', function handler (e: KeyboardEvent) {
     switch (e.keyCode) {
       case UP_KEY:
-        signal('inc')(); // invoke the signal > callback function directly
+        signal('inc')(new Event('keyup')); // invoke the signal with a mock event
         break;
       case DOWN_KEY:
-        signal('dec')();
+        signal('dec')(new Event('keyup')); // invoke the signal with a mock event
         break;
     }
   });
