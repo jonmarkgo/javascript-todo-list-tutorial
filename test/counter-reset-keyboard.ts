@@ -5,32 +5,11 @@
 /* if require is available, it means we are in Node.js Land i.e. testing!
  in the broweser, the "elmish" DOM functions are loaded in a <script> tag */
 /* istanbul ignore next */
-if (typeof require !== 'undefined' && this.window !== this) {
+if (typeof require !== 'undefined' && typeof window === 'undefined') {
   var { button, div, empty, mount, text } = require('../lib/elmish.js');
 }
 
-type Model = number;
-type Action = 'inc' | 'dec' | 'reset';
-
-function update (action: Action, model: Model): Model {    // Update function takes the current state
-  switch(action) {                   // and an action (String) runs a switch
-    case 'inc': return model + 1;    // add 1 to the model
-    case 'dec': return model - 1;    // subtract 1 from model
-    case 'reset': return 0;          // reset state to 0 (Zero) git.io/v9KJk
-    default: return model;           // if no action, return curent state.
-  }                                  // (default action always returns current)
-}
-
-type Signal = (action: Action) => () => void;
-
-function view (model: Model, signal: Signal): HTMLElement {
-  return div([], [
-    button(["class=inc", "id=inc", signal('inc')], [text('+')]), // increment
-    div(["class=count", "id=count"], [text(model.toString())]), // count
-    button(["class=dec", "id=dec", signal('dec')], [text('-')]), // decrement
-    button(["class=reset", "id=reset", signal('reset')], [text('Reset')])
-  ]);
-}
+import { Model, Action, Signal, update, view } from './counter';
 
 function subscriptions (signal: Signal): void {
   const UP_KEY = 38; // increment the counter when [↑] (up) key is pressed

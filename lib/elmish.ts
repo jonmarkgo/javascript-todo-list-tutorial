@@ -7,7 +7,7 @@
  * const node = document.getElementById('app');
  * empty(node);
  */
-function empty (node: HTMLElement): void {
+export function empty (node: HTMLElement): void {
   while (node.lastChild) {
     node.removeChild(node.lastChild);
   }
@@ -21,39 +21,43 @@ function empty (node: HTMLElement): void {
  * @param {String} root_element_id root DOM element in which the app is mounted
  * @param {Function} subscriptions any event listeners the application needs
  */
-function mount<T> (
+export function mount<T, A> (
   model: T,
-  update: (action: string, model: T, data?: any) => T,
-  view: (model: T, signal: SignalFunction<T>) => HTMLElement,
+  update: (action: A, model: T, data?: any) => T,
+  view: (model: T, signal: (action: A) => void) => HTMLElement,
   root_element_id: string,
-  subscriptions?: (signal: SignalFunction<T>) => void
+  subscriptions?: (signal: (action: A) => void) => void
 ): void {
   const ROOT = document.getElementById(root_element_id); // root DOM element
   if (!ROOT) throw new Error(`Element with id ${root_element_id} not found`);
   const store_name = 'todos-elmish_' + root_element_id; // test-app !== app
 
-  function render (mod: T, sig: SignalFunction<T>, root: HTMLElement): void {
+  function render (mod: T, sig: (action: A) => void, root: HTMLElement): HTMLElement {
     localStorage.setItem(store_name, JSON.stringify(mod)); // save the model!
     empty(root); // clear root element (container) before (re)rendering
-    root.appendChild(view(mod, sig)) // render view based on model & signal
+    const renderedView = view(mod, sig);
+    root.appendChild(renderedView); // render view based on model & signal
+    return renderedView;
   }
 
-  function signal(action: string, data?: any, model?: T): () => void {
-    return function callback(): void {
-      model = JSON.parse(localStorage.getItem(store_name) || '{}') as T;
-      const updatedModel = update(action, model, data); // update model for action
+  const signal: (action: A) => void = (action: A) => {
+    model = JSON.parse(localStorage.getItem(store_name) || '{}') as T;
+    const updatedModel = update(action, model); // update model for action
+    if (ROOT) {
       render(updatedModel, signal, ROOT);
-    };
-  }
+    }
+  };
 
   model = JSON.parse(localStorage.getItem(store_name) || '{}') as T || model;
-  render(model, signal, ROOT);
+  if (ROOT) {
+    render(model, signal, ROOT);
+  }
   if (subscriptions && typeof subscriptions === 'function') {
     subscriptions(signal);
   }
 }
 
-type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
+export type SignalFunction<A> = (action: A) => void;
 
 /**
 * `add_attributes` applies the desired attribute(s) to the specified DOM node.
@@ -66,12 +70,12 @@ type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 * // returns node with attributes applied
 * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
 */
-function add_attributes (attrlist: (string | Function)[], node: HTMLElement): HTMLElement {
+export function add_attributes (attrlist: (string | Function)[], node: HTMLElement): HTMLElement {
   // console.log(attrlist, node);
   if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
     attrlist.forEach(function (attr) { // apply all props in array
       // do not attempt to "split" an onclick function as it's not a string!
-      if (typeof attr === 'function') { node.onclick = attr; return node; }
+      if (typeof attr === 'function') { node.onclick = attr as (this: GlobalEventHandlers, ev: MouseEvent) => any; return node; }
       // apply any attributes that are *not* functions (i.e. Strings):
       const a = (attr as string).split('=');
       switch(a[0]) {
@@ -130,7 +134,7 @@ function add_attributes (attrlist: (string | Function)[], node: HTMLElement): HT
  * // returns the parent node with the "children" appended
  * var parent = elmish.append_childnodes([div, p, section], parent);
  */
-function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTMLElement {
+export function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTMLElement {
   if(childnodes && Array.isArray(childnodes) && childnodes.length > 0) {
     childnodes.forEach(function (el) { parent.appendChild(el) });
   }
@@ -148,7 +152,7 @@ function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTM
  * // returns the parent node with the "children" appended
  * var div = elmish.create_element('div', ["class=todoapp"], [h1, input]);
  */
-function create_element (type: string, attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function create_element (type: string, attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return append_childnodes(childnodes,
     add_attributes(attrlist, document.createElement(type))
   );
@@ -163,61 +167,63 @@ function create_element (type: string, attrlist: (string | Function)[], childnod
  * // returns <section> DOM element with attributes applied & children appended
  * var section = elmish.section(["class=todoapp"], [h1, input]);
  */
-function section (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function section (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('section', attrlist, childnodes);
 }
 // these are a *bit* repetitive, if you know a better way, please open an issue!
-function a (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function a (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('a', attrlist, childnodes);
 }
 
-function button (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function button (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('button', attrlist, childnodes);
 }
 
-function div (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function div (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('div', attrlist, childnodes);
 }
 
-function footer (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function footer (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('footer', attrlist, childnodes);
 }
 
-function header (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function header (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('header', attrlist, childnodes);
 }
 
-function h1 (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function h1 (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('h1', attrlist, childnodes);
 }
 
-function input (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function input (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('input', attrlist, childnodes);
 }
 
-function label (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function label (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('label', attrlist, childnodes);
 }
 
-function li (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function li (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('li', attrlist, childnodes);
 }
 
-function span (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function span (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('span', attrlist, childnodes);
 }
 
-function strong (text_str: string): HTMLElement {
+export function strong (text_str: string): HTMLElement {
   const el = document.createElement("strong");
   el.innerHTML = text_str;
   return el;
 }
 
-function text (text: string): Text {
-  return document.createTextNode(text);
+export function text (text: string): HTMLElement {
+  const span = document.createElement('span');
+  span.textContent = text;
+  return span;
 }
 
-function ul (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function ul (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('ul', attrlist, childnodes);
 }
 
