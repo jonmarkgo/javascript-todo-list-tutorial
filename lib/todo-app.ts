@@ -1,8 +1,11 @@
 console.log('todo-app.ts script is executing');
-import { a, button, div, empty, footer, input, h1, header, label, li, mount,
-  route, section, span, strong, text, ul } from './elmish.js';
+import { a, button, div, emptyNode, footer, input, h1, header, label, li, mountApp,
+  route, section, span, strong, text, ul } from './elmish';
 
 export { update, render_item, render_main, render_footer, view, subscriptions };
+
+// Define SignalFunction type
+type SignalFunction<T> = (action: string, data?: any) => () => void;
 
 interface Todo {
   id: number;
@@ -31,7 +34,7 @@ const initial_model: Model = {
 export { initial_model };
 
 // Initialize the application
-mount(initial_model, update, view, 'todo-app', subscriptions);
+mountApp<Model>(initial_model, update, view, 'todo-app', subscriptions);
 
 /**
  * `update` transforms the `model` based on the `action`.
@@ -144,8 +147,7 @@ function update(action: string, model: Model, data?: any): Model {
       });
       break;
     case 'ROUTE':
-      new_model.hash = // (window && window.location && window.location.hash) ?
-        window.location.hash // : '#/';
+      new_model.hash = window.location.hash;
       break;
     default: // if action unrecognised or undefined,
       return model; // return model unmodified
@@ -153,9 +155,6 @@ function update(action: string, model: Model, data?: any): Model {
   console.log('Updated model after update:', JSON.stringify(new_model, null, 2));
   return new_model;
 }
-
-// Initialize the application
-mount(initial_model, update, view, 'todo-app');
 
 /**
  * `render_item` creates an DOM "tree" with a single Todo List Item
@@ -173,7 +172,7 @@ mount(initial_model, update, view, 'todo-app');
  * // returns <li> DOM element with <div>, <input>. <label> & <button> nested
  * var DOM = render_item({id: 1, title: "Build Todo List App", done: false});
  */
-function render_item (item: Todo, model: Model, signal: Function): HTMLElement {
+function render_item (item: Todo, model: Model, signal: SignalFunction<Model>): HTMLElement {
   return (
     li([
       "data-id=" + item.id,
@@ -189,7 +188,7 @@ function render_item (item: Todo, model: Model, signal: Function): HTMLElement {
           typeof signal === 'function' ? signal('TOGGLE', item.id) : ''
           ], []), // <input> does not have any nested elements
         label([ typeof signal === 'function' ? signal('EDIT', item.id) : '' ],
-          [text(item.title)]),
+          [span([], [text(item.title)])]),
         button(["class=destroy", typeof signal === 'function' ? signal('DELETE', item.id) : ''], [])
         ]
       ), // </div>
@@ -198,9 +197,8 @@ function render_item (item: Todo, model: Model, signal: Function): HTMLElement {
       input(["class=edit", "id=" + item.id, "value=" + item.title, "autofocus"], [])
     ] : []) // end concat()
     ) // </li>
-  )
+    );
 }
-
 /**
  * `render_main` renders the `<section class="main">` of the Todo List App
  * which contains all the "main" controls and the `<ul>` with the todo items.
@@ -208,7 +206,7 @@ function render_item (item: Todo, model: Model, signal: Function): HTMLElement {
  * @param {Function} signal - the Elm Architecture "dispatcher" which will run
  * @return {Object} <section> DOM Tree which containing the todo list <ul>, etc.
  */
-function render_main (model: Model, signal: Function): HTMLElement {
+function render_main (model: Model, signal: SignalFunction<Model>): HTMLElement {
   // Requirement #1 - No Todos, should hide #footer and #main
   const display = "style=display:"
     + (model.todos && model.todos.length > 0 ? "block" : "none");
@@ -220,7 +218,7 @@ function render_main (model: Model, signal: Function): HTMLElement {
         (model.all_done ? "checked=checked" : ""),
         "class=toggle-all"
       ], []),
-      label(["for=toggle-all"], [ text("Mark all as complete") ]),
+      label(["for=toggle-all"], [ span([], [text("Mark all as complete")]) ]),
       ul(["class=todo-list"],
         (model.todos && model.todos.length > 0) ?
         model.todos
@@ -239,9 +237,8 @@ function render_main (model: Model, signal: Function): HTMLElement {
         }) : []
       ) // </ul>
     ]) // </section>
-  )
+    );
 }
-
 /**
  * `render_footer` renders the `<footer class="footer">` of the Todo List App
  * which contains count of items to (still) to be done and a `<ul>` "menu"
@@ -253,7 +250,7 @@ function render_main (model: Model, signal: Function): HTMLElement {
  * // returns <footer> DOM element with other DOM elements nested:
  * var DOM = render_footer(model);
  */
-function render_footer (model: Model, signal: Function): HTMLElement {
+function render_footer (model: Model, signal: SignalFunction<Model>): HTMLElement {
 
   // count how many "active" (not yet done) items by filtering done === false:
   const done = (model.todos && model.todos.length > 0) ?
@@ -274,7 +271,7 @@ function render_footer (model: Model, signal: Function): HTMLElement {
     footer(["class=footer", "id=footer", "style=display:" + display], [
       span(["class=todo-count", "id=count"], [
         strong(count.toString()),
-        text(left)
+        span([], [text(left)])
       ]),
       ul(["class=filters"], [
         li([], [
@@ -282,35 +279,34 @@ function render_footer (model: Model, signal: Function): HTMLElement {
             "href=#/", "id=all", "class=" +
             (model.hash === '#/' ? "selected" : '')
           ],
-          [text("All")])
+          [span([], [text("All")])])
         ]),
         li([], [
           a([
             "href=#/active", "id=active", "class=" +
             (model.hash === '#/active' ? "selected" : '')
           ],
-          [text("Active")])
+          [span([], [text("Active")])])
         ]),
         li([], [
           a([
             "href=#/completed", "id=completed", "class=" +
             (model.hash === '#/completed' ? "selected" : '')
           ],
-          [text("Completed")])
+          [span([], [text("Completed")])])
         ])
       ]), // </ul>
       button(["class=clear-completed", typeof signal === 'function' ? signal('CLEAR_COMPLETED') : '', "style=display:" + display_clear], [
-          text("Clear completed ["),
+          span([], [text("Clear completed [")]),
           span(["id=completed-count"], [
-            text(done.toString())
+            span([], [text(done.toString())])
           ]),
-          text("]")
+          span([], [text("]")])
         ]
       )
     ])
   )
 }
-
 /**
  * `view` renders the entire Todo List App
  * which contains count of items to (still) to be done and a `<ul>` "menu"
@@ -322,7 +318,7 @@ function render_footer (model: Model, signal: Function): HTMLElement {
  * // returns <section class="todo-app"> DOM element with other DOM els nested:
  * var DOM = view(model);
  */
-function view (model: Model, signal: Function): HTMLElement {
+function view (model: Model, signal: SignalFunction<Model>): HTMLElement {
 
   return (
     section(["class=todoapp"], [ // array of "child" elements
@@ -340,16 +336,15 @@ function view (model: Model, signal: Function): HTMLElement {
       render_main(model, signal),
       render_footer(model, signal)
     ]) // <section>
-  ) as HTMLElement;
+  );
 }
-
 /**
  * `subscriptions` let us "listen" for events such as "key press" or "click".
  * and respond according to a pre-defined update/action.
  * @param {Function} signal - the Elm Architecture "dispatcher" which will run
  * both the "update" and "render" functions when invoked with signal(action)
  */
-function subscriptions (signal: Function): void {
+function subscriptions (signal: SignalFunction<Model>): void {
 	const ENTER_KEY = 13; // add a new todo item when [Enter] key is pressed
 	const ESCAPE_KEY = 27; // used for "escaping" when editing a Todo item
 
@@ -382,20 +377,19 @@ function subscriptions (signal: Function): void {
     signal('ROUTE')();
   }
 }
-
 /* module.exports is needed to run the functions using Node.js for testing! */
 /* istanbul ignore next */
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    model: initial_model,
-    update: update,
-    render_item: render_item,     // export so that we can unit test
-    render_main: render_main,     // export for unit testing
-    render_footer: render_footer, // export for unit testing
-    subscriptions: subscriptions,
-    view: view
-  }
+    module.exports = {
+        model: initial_model,
+        update: update,
+        render_item: render_item, // export so that we can unit test
+        render_main: render_main, // export for unit testing
+        render_footer: render_footer, // export for unit testing
+        subscriptions: subscriptions,
+        view: view
+    };
 }
 
 // Initialize the application
-mount(initial_model, update, view, 'todo-app', subscriptions);
+mountApp(initial_model, update, view, 'todo-app', subscriptions);

@@ -5,7 +5,7 @@ const html = fs.readFileSync(path.resolve(__dirname, '../index.html'));
 require('jsdom-global')(html);      // https://github.com/rstacruz/jsdom-global
 import * as app from '../lib/todo-app'; // functions to test
 const id = 'test-app';              // all tests use 'test-app' as root element
-import * as elmish from '../lib/elmish.js'; // import "elmish" core functions
+import * as elmish from '../lib/elmish'; // import "elmish" core functions
 
 interface Todo {
   id: number;
@@ -17,6 +17,8 @@ interface Model {
   todos: Todo[];
   hash: string;
 }
+
+type SignalFunction<T> = (action: string, data?: any) => () => void;
 
 test('`model` (Object) has desired keys', function (t: test.Test) {
   const initialModel: Model = { todos: [], hash: '#/' };
@@ -75,9 +77,10 @@ test('`TOGGLE` (undo) a todo item from done=true to done=false', function (t: te
 });
 
 // this is used for testing view functions which require a signal function
-function mock_signal (): () => void {
-  return function inner_function(): void {
+function mock_signal(): SignalFunction<Model> {
+  return function inner_function(action: string, data?: any): () => void {
     console.log('done');
+    return () => {};
   }
 }
 
@@ -107,7 +110,7 @@ test('render_item HTML for a single Todo Item', function (t: test.Test) {
 
   const clearElement = document.getElementById(id);
   if (clearElement) {
-    elmish.empty(clearElement); // clear DOM ready for next test
+    elmish.emptyNode(clearElement); // clear DOM ready for next test
   }
   t.end();
 });
@@ -122,7 +125,8 @@ test('render_item HTML without a valid signal function', function (t: test.Test)
   // render the ONE todo list item:
   const element = document.getElementById(id);
   if (element) {
-    const renderedItem = app.render_item(model.todos[0], model, () => {});
+    const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+    const renderedItem = app.render_item(model.todos[0], model, mockSignal);
     if (renderedItem instanceof HTMLElement) {
       element.appendChild(renderedItem);
     }
@@ -138,7 +142,7 @@ test('render_item HTML without a valid signal function', function (t: test.Test)
 
   const clearElement = document.getElementById(id);
   if (clearElement) {
-    elmish.empty(clearElement); // clear DOM ready for next test
+    elmish.emptyNode(clearElement); // clear DOM ready for next test
   }
   t.end();
 });
@@ -178,7 +182,7 @@ test('render_main "main" view using (elmish) HTML DOM functions', function (t: t
   })
   const clearElement = document.getElementById(id);
   if (clearElement) {
-    elmish.empty(clearElement); // clear DOM ready for next test
+    elmish.emptyNode(clearElement); // clear DOM ready for next test
   }
   t.end();
 });
@@ -195,7 +199,7 @@ test('render_footer view using (elmish) HTML DOM functions', function (t) {
   // render_footer view and append it to the DOM inside the `test-app` node:
   const element = document.getElementById(id);
   if (element) {
-    const mockSignal = () => {}; // Mock signal function
+    const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
     const renderedFooter = app.render_footer(model, mockSignal);
     if (renderedFooter instanceof HTMLElement) {
       element.appendChild(renderedFooter);
@@ -235,7 +239,7 @@ test('render_footer view using (elmish) HTML DOM functions', function (t) {
 
   const clearElement = document.getElementById(id);
   if (clearElement) {
-    elmish.empty(clearElement); // clear DOM ready for next test
+    elmish.emptyNode(clearElement); // clear DOM ready for next test
   }
   t.end();
 });
@@ -250,7 +254,7 @@ test('render_footer 1 item left (pluarisation test)', function (t: test.Test) {
   // render_footer view and append it to the DOM inside the `test-app` node:
   const element = document.getElementById(id);
   if (element) {
-    const mockSignal = () => {}; // Mock signal function
+    const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
     const renderedFooter = app.render_footer(model, mockSignal);
     if (renderedFooter instanceof HTMLElement) {
       element.appendChild(renderedFooter);
@@ -264,7 +268,7 @@ test('render_footer 1 item left (pluarisation test)', function (t: test.Test) {
 
   const clearElement = document.getElementById(id);
   if (clearElement) {
-    elmish.empty(clearElement); // clear DOM ready for next test
+    elmish.emptyNode(clearElement); // clear DOM ready for next test
   }
   t.end();
 });
@@ -274,7 +278,7 @@ test('view renders the whole todo app using "partials"', function (t: test.Test)
   const element = document.getElementById(id);
   const model: Model = { todos: [], hash: '#/' }; // initial model
   if (element) {
-    const mockSignal = () => {}; // Mock signal function
+    const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
     element.appendChild(app.view(model, mockSignal));
   }
 
@@ -292,7 +296,7 @@ test('view renders the whole todo app using "partials"', function (t: test.Test)
 
   const clearElement = document.getElementById(id);
   if (clearElement) {
-    elmish.empty(clearElement); // clear DOM ready for next test
+    elmish.emptyNode(clearElement); // clear DOM ready for next test
   }
   t.end();
 });
@@ -301,7 +305,7 @@ test('1. No Todos, should hide #footer and #main', function (t: test.Test) {
   // render the view and append it to the DOM inside the `test-app` node:
   const element = document.getElementById(id);
   if (element) {
-    const mockSignal = () => {}; // Mock signal function
+    const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
     element.appendChild(app.view({ todos: [], hash: '#/' }, mockSignal)); // No Todos
   }
 
@@ -315,7 +319,7 @@ test('1. No Todos, should hide #footer and #main', function (t: test.Test) {
 
   const clearElement = document.getElementById(id);
   if (clearElement) {
-    elmish.empty(clearElement); // clear DOM ready for next test
+    elmish.emptyNode(clearElement); // clear DOM ready for next test
   }
   t.end();
 });
@@ -349,11 +353,11 @@ localStorage.removeItem('todos-elmish_store');
 test('2. New Todo, should allow me to add todo items', function (t) {
   const element = document.getElementById(id);
   if (element) {
-    elmish.empty(element);
+    elmish.emptyNode(element);
   }
   // render the view and append it to the DOM inside the `test-app` node:
-  const mockSignal = () => {}; // Mock signal function
-  elmish.mount({todos: [], hash: '#/'}, app.update, (model, signal) => app.view(model, signal), id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp({todos: [], hash: '#/'}, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   const new_todo = document.getElementById('new-todo') as HTMLInputElement | null;
   if (new_todo) {
     // "type" content in the <input id="new-todo">:
@@ -382,14 +386,14 @@ test('2. New Todo, should allow me to add todo items', function (t) {
     const main_footer= window.getComputedStyle(document.getElementById('footer') as HTMLElement);
     t.equal('block', main_footer.display, "item added, show #footer");
 
-    elmish.empty(document.getElementById(id) as HTMLElement); // clear DOM ready for next test
+    elmish.emptyNode(document.getElementById(id) as HTMLElement); // clear DOM ready for next test
     localStorage.removeItem('todos-elmish_' + id);
   }
   t.end();
 });
 
 test('3. Mark all as completed ("TOGGLE_ALL")', function (t) {
-  elmish.empty(document.getElementById(id) as HTMLElement);
+  elmish.emptyNode(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -400,8 +404,8 @@ test('3. Mark all as completed ("TOGGLE_ALL")', function (t) {
     hash: '#/' // the "route" to display
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  const mockSignal = () => {}; // Mock signal function
-  elmish.mount(model, app.update, (model, signal) => app.view(model, signal), id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   // confirm that the ONLY the first todo item is done=true:
   const items = document.querySelectorAll('.view');
 
@@ -446,13 +450,13 @@ test('3. Mark all as completed ("TOGGLE_ALL")', function (t) {
       "complete all checkbox should update state when items are completed")
   }
 
-  elmish.empty(document.getElementById(id) as HTMLElement); // clear DOM ready for next test
+  elmish.emptyNode(document.getElementById(id) as HTMLElement); // clear DOM ready for next test
   localStorage.removeItem('todos-elmish_store');
   t.end();
 });
 
 test('4. Item: should allow me to mark items as complete', function (t) {
-  elmish.empty(document.getElementById(id) as HTMLElement);
+  elmish.emptyNode(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -461,7 +465,8 @@ test('4. Item: should allow me to mark items as complete', function (t) {
     hash: '#/' // the "route" to display
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount(model, app.update, app.view, id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   const item = document.getElementById('0')
   t.equal(item?.textContent, model.todos[0].title, 'Item contained in model.');
   // confirm that the todo item is NOT done (done=false):
@@ -485,7 +490,7 @@ test('4. Item: should allow me to mark items as complete', function (t) {
 });
 
 test('4.1 DELETE item by clicking <button class="destroy">', function (t) {
-  elmish.empty(document.getElementById(id) as HTMLElement);
+  elmish.emptyNode(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -494,7 +499,8 @@ test('4.1 DELETE item by clicking <button class="destroy">', function (t) {
     hash: '#/' // the "route" to display
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount(model, app.update, app.view, id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   // const todo_count = ;
   t.equal(document.querySelectorAll('.destroy').length, 1, "one destroy button")
 
@@ -515,7 +521,7 @@ test('4.1 DELETE item by clicking <button class="destroy">', function (t) {
 });
 
 test('5.1 Editing: > Render an item in "editing mode"', function (t) {
-  elmish.empty(document.getElementById(id) as HTMLElement);
+  elmish.emptyNode(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -529,14 +535,15 @@ test('5.1 Editing: > Render an item in "editing mode"', function (t) {
   // render the ONE todo list item in "editing mode" based on model.editing:
   const container = document.getElementById(id);
   if (container) {
+    const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
     container.appendChild(
-      app.render_item(model.todos[2], model, mock_signal),
+      app.render_item(model.todos[2], model, mockSignal),
     );
     // test that signal (in case of the test mock_signal) is onclick attribute:
     const label = document.querySelectorAll('.view > label')[0] as HTMLLabelElement;
     if (label && label.onclick) {
       t.equal(label.onclick.toString(),
-        mock_signal().toString(), "mock_signal is onclick attribute of label");
+        mockSignal('TOGGLE_DONE', model.todos[2].id).toString(), "mockSignal is onclick attribute of label");
     }
   }
 
@@ -556,7 +563,7 @@ test('5.1 Editing: > Render an item in "editing mode"', function (t) {
 });
 
 test('5.2 Double-click an item <label> to edit it', function (t) {
-  elmish.empty(document.getElementById(id) as HTMLElement);
+  elmish.emptyNode(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -566,7 +573,8 @@ test('5.2 Double-click an item <label> to edit it', function (t) {
     hash: '#/' // the "route" to display
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount(model, app.update, app.view, id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   const labels = document.querySelectorAll('.view > label');
   if (labels.length > 1) {
     const label = labels[1] as HTMLLabelElement;
@@ -588,7 +596,7 @@ test('5.2 Double-click an item <label> to edit it', function (t) {
 });
 
 test('5.2.2 Slow clicks do not count as double-click > no edit!', function (t) {
-  elmish.empty(document.getElementById(id) as HTMLElement);
+  elmish.emptyNode(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -598,7 +606,8 @@ test('5.2.2 Slow clicks do not count as double-click > no edit!', function (t) {
     hash: '#/' // the "route" to display
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount(model, app.update, app.view, id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   const labels = document.querySelectorAll('.view > label');
   if (labels.length > 1) {
     const label = labels[1] as HTMLLabelElement;
@@ -617,7 +626,7 @@ test('5.2.2 Slow clicks do not count as double-click > no edit!', function (t) {
 });
 
 test('5.3 [ENTER] Key in edit mode triggers SAVE action', function (t) {
-  elmish.empty(document.getElementById(id) as HTMLElement);
+  elmish.emptyNode(document.getElementById(id) as HTMLElement);
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
     todos: [
@@ -628,7 +637,8 @@ test('5.3 [ENTER] Key in edit mode triggers SAVE action', function (t) {
     editing: 1 // edit the 3rd todo list item (which has id == 2)
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount(model, app.update, app.view, id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   // change the
   const updated_title = "Do things that don\'t scale!  "
   // apply the updated_title to the <input class="edit">:
@@ -652,7 +662,7 @@ test('5.4 SAVE should remove the item if an empty text string was entered',
   function (t) {
   const element = document.getElementById(id);
   if (element) {
-    elmish.empty(element);
+    elmish.emptyNode(element);
   }
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
@@ -664,7 +674,8 @@ test('5.4 SAVE should remove the item if an empty text string was entered',
     editing: 1 // edit the 3rd todo list item (which has id == 2)
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount(model, app.update, app.view, id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   t.equal(document.querySelectorAll('.view').length, 2, 'todo count: 2');
   // apply empty string to the <input class="edit">:
   const editElement = document.querySelectorAll('.edit')[0] as HTMLInputElement;
@@ -679,7 +690,7 @@ test('5.4 SAVE should remove the item if an empty text string was entered',
 test('5.5 CANCEL should cancel edits on escape', function (t) {
   const element = document.getElementById(id);
   if (element) {
-    elmish.empty(element);
+    elmish.emptyNode(element);
   }
   localStorage.removeItem('todos-elmish_' + id);
   const model = {
@@ -691,7 +702,8 @@ test('5.5 CANCEL should cancel edits on escape', function (t) {
     editing: 1 // edit the 3rd todo list item (which has id == 2)
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount(model, app.update, app.view, id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   t.equal(document.querySelectorAll('.view > label')[1].textContent,
     model.todos[1].title, 'todo id 1 has title: ' + model.todos[1].title);
   // apply empty string to the <input class="edit">:
@@ -710,7 +722,7 @@ test('6. Counter > should display the current number of todo items',
   function (t) {
   const element = document.getElementById(id);
   if (element) {
-    elmish.empty(element);
+    elmish.emptyNode(element);
   }
   const model = {
     todos: [
@@ -721,7 +733,8 @@ test('6. Counter > should display the current number of todo items',
     hash: '#/'
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount(model, app.update, app.view, id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   // count:
   const countElement = document.getElementById('count');
   const count = countElement ? parseInt(countElement.textContent || '0', 10) : 0;
@@ -729,7 +742,7 @@ test('6. Counter > should display the current number of todo items',
 
   const clearElement = document.getElementById(id);
   if (clearElement) {
-    elmish.empty(clearElement);
+    elmish.emptyNode(clearElement);
   }
   localStorage.removeItem('todos-elmish_' + id);
   t.end();
@@ -739,7 +752,7 @@ test('7. Clear Completed > should display the number of completed items',
   function (t) {
   const element = document.getElementById(id);
   if (element) {
-    elmish.empty(element);
+    elmish.emptyNode(element);
   }
   const model = {
     todos: [
@@ -750,7 +763,8 @@ test('7. Clear Completed > should display the number of completed items',
     hash: '#/'
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount(model, app.update, app.view, id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   // count todo items in DOM:
   t.equal(document.querySelectorAll('.view').length, 3,
     "at the start, there are 3 todo items in the DOM.");
@@ -778,7 +792,7 @@ test('7. Clear Completed > should display the number of completed items',
 
   const clearElement = document.getElementById(id);
   if (clearElement) {
-    elmish.empty(clearElement); // clear DOM ready for next test
+    elmish.emptyNode(clearElement); // clear DOM ready for next test
   }
   localStorage.removeItem('todos-elmish_' + id);
   t.end();
@@ -787,7 +801,7 @@ test('7. Clear Completed > should display the number of completed items',
 test('8. Persistence > should persist its data', function (t) {
   const element = document.getElementById(id);
   if (element) {
-    elmish.empty(element);
+    elmish.emptyNode(element);
   }
   const model = {
     todos: [
@@ -796,7 +810,8 @@ test('8. Persistence > should persist its data', function (t) {
     hash: '#/'
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount(model, app.update, app.view, id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   // confirm that the model is saved to localStorage
   // console.log('localStorage', localStorage.getItem('todos-elmish_' + id));
   const storedData = localStorage.getItem('todos-elmish_' + id);
@@ -808,7 +823,7 @@ test('8. Persistence > should persist its data', function (t) {
 
   const clearElement = document.getElementById(id);
   if (clearElement) {
-    elmish.empty(clearElement); // clear DOM ready for next test
+    elmish.emptyNode(clearElement); // clear DOM ready for next test
   }
   localStorage.removeItem('todos-elmish_' + id);
   t.end();
@@ -819,7 +834,7 @@ test('9. Routing > should allow me to display active/completed/all items',
   localStorage.removeItem('todos-elmish_' + id);
   const element = document.getElementById(id);
   if (element) {
-    elmish.empty(element);
+    elmish.emptyNode(element);
   }
   const model = {
     todos: [
@@ -830,7 +845,8 @@ test('9. Routing > should allow me to display active/completed/all items',
     hash: '#/active' // ONLY ACTIVE items
   };
   // render the view and append it to the DOM inside the `test-app` node:
-  elmish.mount(model, app.update, app.view, id);
+  const mockSignal: SignalFunction<Model> = (action: string, data?: any) => () => {};
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   const mod = app.update('ROUTE', model);
   // t.equal(mod.hash, '#/', 'default route is #/');
 
@@ -841,12 +857,12 @@ test('9. Routing > should allow me to display active/completed/all items',
   // empty:
   const clearElement = document.getElementById(id);
   if (clearElement) {
-    elmish.empty(clearElement);
+    elmish.emptyNode(clearElement);
   }
   localStorage.removeItem('todos-elmish_' + id);
   // show COMPLTED items:
   model.hash = '#/completed';
-  elmish.mount(model, app.update, app.view, id);
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   t.equal(document.querySelectorAll('.view').length, 2,
     "two completed items");
   selected = document.querySelectorAll('.selected')[0]
@@ -855,12 +871,12 @@ test('9. Routing > should allow me to display active/completed/all items',
   // empty:
   const clearElement2 = document.getElementById(id);
   if (clearElement2) {
-    elmish.empty(clearElement2);
+    elmish.emptyNode(clearElement2);
   }
   localStorage.removeItem('todos-elmish_' + id);
   // show ALL items:
   model.hash = '#/';
-  elmish.mount(model, app.update, app.view, id);
+  elmish.mountApp(model, app.update, (model: Model, signal: SignalFunction<Model>) => app.view(model, signal), id);
   t.equal(document.querySelectorAll('.view').length, 3,
     "three items total");
   selected = document.querySelectorAll('.selected')[0]
@@ -868,7 +884,7 @@ test('9. Routing > should allow me to display active/completed/all items',
 
   const clearElement3 = document.getElementById(id);
   if (clearElement3) {
-    elmish.empty(clearElement3); // clear DOM ready for next test
+    elmish.emptyNode(clearElement3); // clear DOM ready for next test
   }
   localStorage.removeItem('todos-elmish_' + id);
   t.end();

@@ -254,7 +254,7 @@ export function strong (text_str: string): HTMLElement {
   return el;
 }
 
-export function text (text: string): HTMLElement {
+export function text(text: string): HTMLElement {
   const span = document.createElement('span');
   span.textContent = text;
   return span;

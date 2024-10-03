@@ -10,7 +10,7 @@ const { JSDOM } = jsdom;
 
 const id = 'app'; // Define the id variable at the beginning of the file
 
-test('elmish.empty("root") removes DOM elements from container', function (t) {
+test('elmish.emptyNode("root") removes DOM elements from container', function (t) {
   // setup the test div:
   const text = 'Hello World!'
   const divid = "mydiv";
@@ -29,15 +29,15 @@ test('elmish.empty("root") removes DOM elements from container', function (t) {
   t.equal(actual, text, "Contents of mydiv is: " + actual + ' == ' + text);
   t.equal(root.childElementCount, 1, "Root element " + id + " has 1 child el");
   // empty the root DOM node:
-  elmish.empty(root); // exercise the `empty` function!
-  t.equal(root.childElementCount, 0, "After empty(root) has 0 child elements!")
+  elmish.emptyNode(root); // exercise the `emptyNode` function!
+  t.equal(root.childElementCount, 0, "After emptyNode(root) has 0 child elements!")
   t.end();
 });
 
 
-test('elmish.mount app expect state to be Zero', function (t) {
+test('elmish.mountApp app expect state to be Zero', function (t) {
   // use view and update from counter-reset example
-  // to confirm that our elmish.mount function is generic!
+  // to confirm that our elmish.mountApp function is generic!
   const { view, update } = require('./counter.js') as {
     view: (model: number, signal: (action: string) => void) => HTMLElement,
     update: (action: string, model: number) => number
@@ -49,7 +49,7 @@ test('elmish.mount app expect state to be Zero', function (t) {
     return t.end();
   }
   const initial_model = { todos: [], hash: '#/' };
-  elmish.mount(initial_model, update as any, view as any, id);
+  elmish.mountApp(initial_model, update as any, view as any, id);
   const actual = document.getElementById(id)?.textContent;
   const actual_stripped = parseInt(actual?.replace('+', '')
     .replace('-Reset', '') ?? '', 10);
@@ -70,7 +70,7 @@ test('elmish.mount app expect state to be Zero', function (t) {
   }
   const state = parseInt(countElement.textContent ?? '', 10);
   t.equal(state, 0, "State is 0 (Zero) after reset."); // state reset to 0!
-  elmish.empty(root); // clean up after tests
+  elmish.emptyNode(root); // clean up after tests
   t.end()
 });
 
@@ -123,7 +123,7 @@ test('elmish.add_attributes applies id HTML attribute to a node', function (t) {
   root.appendChild(el);
   const actual = document.getElementById('myid')?.textContent;
   t.equal(actual, text, "<section> has 'myid' id attribute");
-  elmish.empty(root); // clear the "DOM"/"state" before next test
+  elmish.emptyNode(root); // clear the "DOM"/"state" before next test
   t.end();
 });
 
@@ -133,7 +133,7 @@ test('elmish.add_attributes applies multiple attribute to node', function (t) {
     t.fail('Root element not found');
     return t.end();
   }
-  elmish.empty(root);
+  elmish.emptyNode(root);
   let el = document.createElement('span');
   el = add_attributes(["id=myid", "class=totes mcawesome"], el) as HTMLSpanElement;
   const text = 'hello world'
@@ -212,7 +212,7 @@ test('elmish.add_attributes apply style="display: block;"', function (t) {
     t.fail('Root element not found');
     return t.end();
   }
-  elmish.empty(root);
+  elmish.emptyNode(root);
   let sec = document.createElement('section');
   root.appendChild(
     add_attributes(["id=main", "style=display: block;"], sec) as HTMLElement
@@ -228,7 +228,7 @@ test('elmish.add_attributes checked=true on "done" item', function (t) {
     t.fail('Root element not found');
     return t.end();
   }
-  elmish.empty(root);
+  elmish.emptyNode(root);
   let input = document.createElement('input');
   input = add_attributes(["type=checkbox", "id=item1", "checked=true"],
     input) as HTMLInputElement;
@@ -261,7 +261,7 @@ test('elmish.add_attributes <a href="#/active">Active</a>', function (t) {
     t.fail('Root element not found');
     return t.end();
   }
-  elmish.empty(root);
+  elmish.emptyNode(root);
   root.appendChild(
     add_attributes(["href=#/active", "class=selected", "id=active"],
       document.createElement('a')
@@ -303,7 +303,7 @@ test('test elmish.add_attributes attrlist null (no effect)', function (t) {
 test('elmish.append_childnodes append child DOM nodes to parent', function (t) {
   const root = document.getElementById(id);
   if (root) {
-    elmish.empty(root); // clear the test DOM before!
+    elmish.emptyNode(root); // clear the test DOM before!
     let div = document.createElement('div');
     let p = document.createElement('p');
     let section = document.createElement('section');
@@ -340,7 +340,7 @@ test('elmish.section creates a <section> HTML element', function (t) {
   }
   // Removed duplicate declaration of rootElement
   if (rootElement) {
-    elmish.empty(rootElement);
+    elmish.emptyNode(rootElement);
   }
   t.end();
 });
@@ -372,7 +372,7 @@ test('elmish create <header> view using HTML element functions', function (t) {
     const h1Element = document.querySelector('h1');
     t.equal(h1Element?.textContent, 'todos', '<h1>todos</h1>');
 
-    elmish.empty(rootElement);
+    elmish.emptyNode(rootElement);
   } else {
     t.fail('Root element not found');
   }
@@ -433,12 +433,12 @@ test('elmish create "main" view using HTML DOM functions', function (t) {
     const mockUpdate = (action: any, model: any) => model;
 
     const initial_model = { todos: [], hash: '#/' };
-    elmish.mount(initial_model, mockUpdate, mockView, id);
+    elmish.mountApp(initial_model, mockUpdate, mockView, id);
     const done = document.querySelectorAll('.completed')[0]?.textContent;
     t.equal(done, 'Learn The Elm Architecture ("TEA")', 'Done: Learn "TEA"');
     const todo = document.querySelectorAll('.view')[1]?.textContent;
     t.equal(todo, 'Build TEA Todo List App', 'Todo: Build TEA Todo List App');
-    elmish.empty(rootElement);
+    elmish.emptyNode(rootElement);
   }
   t.end();
 });
@@ -502,7 +502,7 @@ test('elmish create <footer> view using HTML DOM functions', function (t) {
     t.equal(clear, "Clear completed", '<button> text is "Clear completed"');
     const selected = document.querySelectorAll('.selected')[0]?.textContent;
     t.equal(selected, "All", "All is selected by default");
-    elmish.empty(rootElement);
+    elmish.emptyNode(rootElement);
   }
   t.end();
 });
@@ -558,12 +558,12 @@ localStorage.removeItem('todos-elmish_' + id);
 
 // // Test mount's localStorage using view and update from counter-reset example
 // // to confirm that our elmish.mount localStorage works and is "generic".
-test('elmish.mount sets model in localStorage', function (t) {
+test('elmish.mountApp sets model in localStorage', function (t) {
   const { view, update } = require('./counter.js');
   const root = document.getElementById(id);
 
   const initial_model = { todos: [], hash: '#/' };
-  elmish.mount(initial_model, update, view, id);
+  elmish.mountApp(initial_model, update, view, id);
   // the "model" stored in localStorage should be 7 now:
   const storedValue = localStorage.getItem('todos-elmish_' + id);
   t.deepEqual(JSON.parse(storedValue || '{}'), initial_model,
@@ -578,7 +578,7 @@ test('elmish.mount sets model in localStorage', function (t) {
   // attempting to "re-mount" with a different model value should not work
   // because mount should retrieve the value from localStorage
   const different_model = { todos: [{ id: 1, title: 'Test', done: false }], hash: '#/active' };
-  elmish.mount(different_model, update, view, id); // model should be ignored this time!
+  elmish.mountApp(different_model, update, view, id); // model should be ignored this time!
 
   const storedValue2 = localStorage.getItem('todos-elmish_' + id);
   t.deepEqual(JSON.parse(storedValue2 || '{}'), initial_model,
@@ -596,9 +596,9 @@ test('elmish.mount sets model in localStorage', function (t) {
   const updatedModel = JSON.parse(storedValue3 || '{}');
   t.equal(updatedModel.todos.length, 1, "todos-elmish_store has 1 todo item (as expected).");
   if (root) {
-    elmish.empty(root); // reset the DOM to simulate refreshing a browser window
+    elmish.emptyNode(root); // reset the DOM to simulate refreshing a browser window
   }
-  elmish.mount(different_model, update, view, id); // different_model ignored! read model from localStorage
+  elmish.mountApp(different_model, update, view, id); // different_model ignored! read model from localStorage
   // clearing DOM does NOT clear the localStorage (this is desired behaviour!)
   const storedValue4 = localStorage.getItem('todos-elmish_' + id);
   t.deepEqual(JSON.parse(storedValue4 || '{}'), updatedModel,
@@ -613,7 +613,7 @@ test('elmish.add_attributes onclick=signal(action) events!', function (t) {
     t.fail('Root element not found');
     return t.end();
   }
-  elmish.empty(root);
+  elmish.emptyNode(root);
   let counter = 0; // global to this test.
   function signal (action: string) { // simplified version of TEA "dispacher" function
     return function callback() {
@@ -639,7 +639,7 @@ test('elmish.add_attributes onclick=signal(action) events!', function (t) {
   } else {
     t.fail("Button element not found");
   }
-  elmish.empty(root);
+  elmish.emptyNode(root);
   t.end();
 });
 
@@ -658,7 +658,7 @@ test('subscriptions test using counter-reset-keyaboard ⌨️', function (t) {
 
   // mount the counter-reset-keyboard example app WITH subscriptions:
   const initial_model = { todos: [], hash: '#/' };
-  elmish.mount(initial_model, update as any, view as any, id, subscriptions);
+  elmish.mountApp(initial_model, update as any, view as any, id, subscriptions);
 
   // counter starts off at 0 (zero):
   const countElement = document.getElementById('count');
@@ -673,7 +673,7 @@ test('subscriptions test using counter-reset-keyaboard ⌨️', function (t) {
     "counter incremented to 1 after ArrowUp keypress");
 
   // cleanup
-  elmish.empty(root);
+  elmish.emptyNode(root);
   t.end();
 });
 

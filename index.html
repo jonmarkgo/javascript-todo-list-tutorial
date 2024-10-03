@@ -17,6 +17,19 @@
   <link rel="stylesheet" href="lib/todomvc-app.css">
   <script type="module" src="dist/lib/elmish.js"></script>
   <script type="module" src="dist/lib/todo-app.js"></script>
+  <script type="module">
+    var model = {
+      todos: [
+        // { id: 0, title: "Make something people want.", done: false },
+        // { id: 1, title: "Bootstrap for as long as you can", done: false },
+        // { id: 2, title: "Let's solve our own problem", done: false }
+      ],
+      hash: '#/', // the "route" to display
+      // editing: 2 // edit the 3rd todo list item (which has id == 2)
+    };
+    window.update = update; // Ensure update is in the global scope
+    mountApp(model, update, view, 'app', subscriptions);
+  </script>
 
   <!-- Below this point is all related to the Tests for the App -->
   <div id="test-app"></div> <!-- Create a test-app div to mount the app -->

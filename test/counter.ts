@@ -43,7 +43,9 @@ function mountCounter(model: SimpleCounterModel, update: (action: SimpleCounterA
       }
     };
   };
-  root.appendChild(view(model, signal));    // render initial model (once)
+  if (root) {
+    root.appendChild(viewSimpleCounter(model, signal));    // render initial model (once)
+  }
 }
 
 // The following are "Helper" Functions which each "Do ONLY One Thing" and are
