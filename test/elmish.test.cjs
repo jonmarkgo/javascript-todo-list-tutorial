@@ -2,7 +2,6 @@ const test = require('tape'); // https://github.com/dwyl/learn-tape
 const fs = require('fs'); // read html files (see below)
 const path = require('path'); // so we can open files cross-platform
 const elmish = require('../lib/elmish.js');
-const { fileURLToPath } = require('url');
 const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf-8');
 const jsdomGlobal = require('jsdom-global');
 jsdomGlobal(html); // https://github.com/rstacruz/jsdom-global
@@ -14,8 +13,6 @@ test('elmish.empty("root") removes DOM elements from container', function (t) {
     const divid = "mydiv";
     const root = document.getElementById(id);
     const div = document.createElement('div');
-    div.id = divid;
-    root.appendChild(div);
     // check text of the div:
     var actual = document.getElementById(divid)?.textContent;
     t.equal(actual, text, "Contents of mydiv is: " + actual + ' == ' + text);
@@ -29,7 +26,7 @@ test('elmish.mount app expect state to be Zero', function (t) {
     var _a, _b, _c;
     // use view and update from counter-reset example
     // to confirm that our elmish.mount function is generic!
-    const { view, update } = require('./counter.js');
+    const { view, update } = require('../lib/counter.js');
     var root = document.getElementById(id);
     elmish.mount(7, update, view, id);
     var actual = (_a = document.getElementById(id)) === null || _a === void 0 ? void 0 : _a.textContent;

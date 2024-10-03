@@ -2,23 +2,24 @@ const test = require('tape'); // https://github.com/dwyl/learn-tape
 const fs = require('fs'); // read html files (see below)
 const path = require('path'); // so we can open files cross-platform
 const elmish = require('../lib/elmish.js');
-const { fileURLToPath } = require('url');
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf-8');
-const jsdomGlobal = require('jsdom-global');
-jsdomGlobal(html); // https://github.com/rstacruz/jsdom-global
-const { JSDOM } = require('jsdom');
+const html = fs.readFileSync(path.resolve(__dirname, '../index.html'));
+require('jsdom-global')(html); // https://github.com/rstacruz/jsdom-global
+const jsdom = require("jsdom");
+const JSDOM = jsdom.JSDOM;
 const id = 'test-app'; // all tests use separate root element
 test('elmish.empty("root") removes DOM elements from container', function (t) {
+    var _a;
     // setup the test div:
-    const text = 'Hello World!';
-    const divid = "mydiv";
-    const root = document.getElementById(id);
-    const div = document.createElement('div');
+    var text = 'Hello World!';
+    var divid = "mydiv";
+    var root = document.getElementById(id);
+    var div = document.createElement('div');
     div.id = divid;
+    var txt = document.createTextNode(text);
+    div.appendChild(txt);
     root.appendChild(div);
     // check text of the div:
-    var actual = document.getElementById(divid)?.textContent;
+    var actual = (_a = document.getElementById(divid)) === null || _a === void 0 ? void 0 : _a.textContent;
     t.equal(actual, text, "Contents of mydiv is: " + actual + ' == ' + text);
     t.equal(root.childElementCount, 1, "Root element " + id + " has 1 child el");
     // empty the root DOM node:
@@ -30,7 +31,7 @@ test('elmish.mount app expect state to be Zero', function (t) {
     var _a, _b, _c;
     // use view and update from counter-reset example
     // to confirm that our elmish.mount function is generic!
-    const { view, update } = require('./counter.js');
+    var _d = require('./counter.js'), view = _d.view, update = _d.update;
     var root = document.getElementById(id);
     elmish.mount(7, update, view, id);
     var actual = (_a = document.getElementById(id)) === null || _a === void 0 ? void 0 : _a.textContent;

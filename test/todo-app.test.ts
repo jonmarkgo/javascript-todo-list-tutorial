@@ -54,12 +54,12 @@ test('`TOGGLE` (undo) a todo item from done=true to done=false', function (t) {
 });
 // this is used for testing view functions which require a signal function
 function mock_signal() {
-    return function inner_function(action) {
+    return function inner_function(action: app.Action): void {
         console.log('done');
     };
 }
 test('render_item HTML for a single Todo Item', function (t) {
-    var model = {
+    var model: app.Model = {
         todos: [
             { id: 1, title: "Learn Elm Architecture", done: true },
         ],
@@ -74,7 +74,7 @@ test('render_item HTML for a single Todo Item', function (t) {
     var completedElement = document.querySelectorAll('.completed')[0];
     var done = completedElement ? completedElement.textContent : null;
     t.equal(done, 'Learn Elm Architecture', 'Done: Learn "TEA"');
-    var inputElement = document.querySelectorAll('input')[0];
+    var inputElement = document.querySelectorAll('input')[0] as HTMLInputElement;
     var checked = inputElement ? inputElement.checked : false;
     t.equal(checked, true, 'Done: ' + model.todos[0].title + " is done=true");
     var clearElement = document.getElementById(id);
@@ -84,7 +84,7 @@ test('render_item HTML for a single Todo Item', function (t) {
     t.end();
 });
 test('render_item HTML without a valid signal function', function (t) {
-    var model = {
+    var model: app.Model = {
         todos: [
             { id: 1, title: "Learn Elm Architecture", done: true },
         ],
@@ -99,7 +99,7 @@ test('render_item HTML without a valid signal function', function (t) {
     var completedElement = document.querySelectorAll('.completed')[0];
     var done = completedElement ? completedElement.textContent : null;
     t.equal(done, 'Learn Elm Architecture', 'Done: Learn "TEA"');
-    var inputElement = document.querySelectorAll('input')[0];
+    var inputElement = document.querySelectorAll('input')[0] as HTMLInputElement;
     var checked = inputElement ? inputElement.checked : false;
     t.equal(checked, true, 'Done: ' + model.todos[0].title + " is done=true");
     var clearElement = document.getElementById(id);
@@ -109,7 +109,7 @@ test('render_item HTML without a valid signal function', function (t) {
     t.end();
 });
 test('render_main "main" view using (elmish) HTML DOM functions', function (t) {
-    var model = {
+    var model: app.Model = {
         todos: [
             { id: 1, title: "Learn Elm Architecture", done: true },
             { id: 2, title: "Build Todo List App", done: false },
@@ -129,7 +129,7 @@ test('render_main "main" view using (elmish) HTML DOM functions', function (t) {
     });
     var inputs = document.querySelectorAll('input'); // todo items are 1,2,3
     [true, false, false].forEach(function (state, index) {
-        var inputElement = inputs[index + 1];
+        var inputElement = inputs[index + 1] as HTMLInputElement;
         t.equal(inputElement.checked, state, "Todo #" + index + " is done=" + state);
     });
     var clearElement = document.getElementById(id);
@@ -139,7 +139,7 @@ test('render_main "main" view using (elmish) HTML DOM functions', function (t) {
     t.end();
 });
 test('render_footer view using (elmish) HTML DOM functions', function (t) {
-    var model = {
+    var model: app.Model = {
         todos: [
             { id: 1, title: "Learn Elm Architecture", done: true },
             { id: 2, title: "Build Todo List App", done: false },
@@ -180,7 +180,7 @@ test('render_footer view using (elmish) HTML DOM functions', function (t) {
     t.end();
 });
 test('render_footer 1 item left (pluarisation test)', function (t) {
-    var model = {
+    var model: app.Model = {
         todos: [
             { id: 1, title: "Be excellent to each other!", done: false }
         ],
@@ -211,8 +211,8 @@ test('view renders the whole todo app using "partials"', function (t) {
     var h1Element = document.querySelectorAll('h1')[0];
     t.equal(h1Element ? h1Element.textContent : '', "todos", "<h1>todos");
     // placeholder:
-    var placeholder = document.getElementById('new-todo');
-    t.equal(placeholder === null || placeholder === void 0 ? void 0 : placeholder.getAttribute("placeholder"), "What needs to be done?", "placeholder set on <input>");
+    var placeholder = document.getElementById('new-todo') as HTMLInputElement;
+    t.equal(placeholder?.getAttribute("placeholder"), "What needs to be done?", "placeholder set on <input>");
     // todo-count should display 0 items left (based on initial_model):
     var count = document.getElementById('count');
     var left = count ? count.innerHTML : '';
@@ -244,19 +244,19 @@ test('1. No Todos, should hide #footer and #main', function (t) {
 // Testing localStorage requires "polyfil" because:a
 // https://github.com/jsdom/jsdom/issues/1137 ¯\_(ツ)_/¯
 // globals are usually bad! but a "necessary evil" here.
-var mockLocalStorage = {
-    getItem: function (key) {
-        var value = this[key];
+var mockLocalStorage: Storage = {
+    getItem: function (key: string): string | null {
+        var value = this[key as keyof typeof this];
         return typeof value === 'string' ? value : null;
     },
-    setItem: function (key, value) {
-        this[key] = value;
+    setItem: function (key: string, value: string): void {
+        (this as any)[key] = value;
     },
-    removeItem: function (key) {
-        delete this[key];
+    removeItem: function (key: string): void {
+        delete (this as any)[key];
     },
-    clear: function () { },
-    key: function (index) { return null; },
+    clear: function (): void { },
+    key: function (index: number): string | null { return null; },
     length: 0
 };
 global.localStorage = global.localStorage || mockLocalStorage;
@@ -269,10 +269,12 @@ test('2. New Todo, should allow me to add todo items', function (t) {
     }
     // render the view and append it to the DOM inside the `test-app` node:
     elmish.mount({ todos: [], hash: '#/', input: '' }, app.update, app.view, id, app.subscriptions);
-    var new_todo = document.getElementById('new-todo');
+    var new_todo = document.getElementById('new-todo') as HTMLInputElement;
     // "type" content in the <input id="new-todo">:
     var todo_text = 'Make Everything Awesome!     '; // deliberate whitespace!
-    new_todo.value = todo_text;
+    if (new_todo) {
+        new_todo.value = todo_text;
+    }
     // trigger the [Enter] keyboard key to ADD the new todo:
     document.dispatchEvent(new KeyboardEvent('keyup', { 'keyCode': 13 }));
     var items = document.querySelectorAll('.view');
@@ -285,7 +287,7 @@ test('2. New Todo, should allow me to add todo items', function (t) {
     document.dispatchEvent(new KeyboardEvent('keyup', { 'keyCode': 42 }));
     t.deepEqual(document.getElementById(id), clone, "#" + id + " no change");
     // check that the <input id="new-todo"> was reset after the new item was added
-    t.equal(new_todo.value, '', "should clear text input field when an item is added");
+    t.equal(new_todo ? new_todo.value : '', '', "should clear text input field when an item is added");
     var main = document.getElementById('main');
     var main_display = main ? window.getComputedStyle(main).display : '';
     t.equal('block', main_display, "should show #main and #footer when items added");
@@ -319,39 +321,39 @@ test('3. Mark all as completed ("TOGGLE_ALL")', function (t) {
     // confirm that the ONLY the first todo item is done=true:
     var items = document.querySelectorAll('.view');
     document.querySelectorAll('.toggle').forEach(function (item, index) {
-        var toggleItem = item;
+        var toggleItem = item as HTMLInputElement;
         t.equal(toggleItem.checked, model.todos[index].done, "Todo #" + index + " is done=" + toggleItem.checked
             + " text: " + items[index].textContent);
     });
     // click the toggle-all checkbox to trigger TOGGLE_ALL: >> true
-    var toggleAll = document.getElementById('toggle-all');
+    var toggleAll = document.getElementById('toggle-all') as HTMLInputElement;
     if (toggleAll) {
         toggleAll.click(); // click toggle-all checkbox
     }
     document.querySelectorAll('.toggle').forEach(function (item, index) {
-        var toggleItem = item;
+        var toggleItem = item as HTMLInputElement;
         t.equal(toggleItem.checked, true, "TOGGLE each Todo #" + index + " is done=" + toggleItem.checked
             + " text: " + items[index].textContent);
     });
-    var toggleAllChecked = document.getElementById('toggle-all');
-    t.equal(toggleAllChecked === null || toggleAllChecked === void 0 ? void 0 : toggleAllChecked.checked, true, "should allow me to mark all items as completed");
+    var toggleAllChecked = document.getElementById('toggle-all') as HTMLInputElement;
+    t.equal(toggleAllChecked?.checked, true, "should allow me to mark all items as completed");
     // click the toggle-all checkbox to TOGGLE_ALL (again!) true >> false
-    toggleAll === null || toggleAll === void 0 ? void 0 : toggleAll.click(); // click toggle-all checkbox
+    toggleAll?.click(); // click toggle-all checkbox
     document.querySelectorAll('.toggle').forEach(function (item, index) {
-        var toggleItem = item;
+        var toggleItem = item as HTMLInputElement;
         t.equal(toggleItem.checked, false, "TOGGLE_ALL Todo #" + index + " is done=" + toggleItem.checked
             + " text: " + items[index].textContent);
     });
-    t.equal(toggleAllChecked === null || toggleAllChecked === void 0 ? void 0 : toggleAllChecked.checked, false, "should allow me to clear the completion state of all items");
+    t.equal(toggleAllChecked?.checked, false, "should allow me to clear the completion state of all items");
     // *manually* "click" each todo item:
     document.querySelectorAll('.toggle').forEach(function (item, index) {
-        var toggleItem = item;
+        var toggleItem = item as HTMLInputElement;
         toggleItem.click(); // this should "toggle" the todo checkbox to done=true
         t.equal(toggleItem.checked, true, ".toggle.click() (each) Todo #" + index + " which is done=" + toggleItem.checked
             + " text: " + items[index].textContent);
     });
     // the toggle-all checkbox should be "checked" as all todos are done=true!
-    t.equal(toggleAllChecked === null || toggleAllChecked === void 0 ? void 0 : toggleAllChecked.checked, true, "complete all checkbox should update state when items are completed");
+    t.equal(toggleAllChecked?.checked, true, "complete all checkbox should update state when items are completed");
     var clearDomElement = document.getElementById(id);
     if (clearDomElement) {
         elmish.empty(clearDomElement); // clear DOM ready for next test
@@ -375,9 +377,9 @@ test('4. Item: should allow me to mark items as complete', function (t) {
     // render the view and append it to the DOM inside the `test-app` node:
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
     var item = document.getElementById('0');
-    t.equal(item === null || item === void 0 ? void 0 : item.textContent, model.todos[0].title, 'Item contained in model.');
+    t.equal(item?.textContent, model.todos[0].title, 'Item contained in model.');
     // confirm that the todo item is NOT done (done=false):
-    var toggleItem = document.querySelectorAll('.toggle')[0];
+    var toggleItem = document.querySelectorAll('.toggle')[0] as HTMLInputElement;
     t.equal(toggleItem.checked, false, 'Item starts out "active" (done=false)');
     // click the checkbox to toggle it to done=true
     toggleItem.click();
@@ -408,7 +410,7 @@ test('4.1 DELETE item by clicking <button class="destroy">', function (t) {
     if (item) {
         t.equal(item.textContent, model.todos[0].title, 'Item contained in DOM.');
         // DELETE the item by clicking on the <button class="destroy">:
-        var button = item.querySelectorAll('button.destroy')[0];
+        var button = item.querySelectorAll('button.destroy')[0] as HTMLButtonElement;
         button.click();
     }
     // confirm that there is no loger a <button class="destroy">
@@ -438,12 +440,12 @@ test('5.1 Editing: > Render an item in "editing mode"', function (t) {
         rootElement.appendChild(app.render_item(model.todos[2], model, mock_signal));
     }
     // test that signal (in case of the test mock_signal) is onclick attribute:
-    var label = document.querySelectorAll('.view > label')[0];
+    var label = document.querySelectorAll('.view > label')[0] as HTMLLabelElement;
     t.equal((_a = label.onclick) === null || _a === void 0 ? void 0 : _a.toString(), mock_signal().toString(), "mock_signal is onclick attribute of label");
     // test that the <li class="editing"> and <input class="edit"> was rendered:
     t.equal(document.querySelectorAll('.editing').length, 1, "<li class='editing'> element is visible");
     t.equal(document.querySelectorAll('.edit').length, 1, "<input class='edit'> element is visible");
-    var editInput = document.querySelectorAll('.edit')[0];
+    var editInput = document.querySelectorAll('.edit')[0] as HTMLInputElement;
     t.equal(editInput.value, model.todos[2].title, "<input class='edit'> has value: " + model.todos[2].title);
     t.end();
 });
@@ -463,13 +465,13 @@ test('5.2 Double-click an item <label> to edit it', function (t) {
     };
     // render the view and append it to the DOM inside the `test-app` node:
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
-    var label = document.querySelectorAll('.view > label')[1];
+    var label = document.querySelectorAll('.view > label')[1] as HTMLLabelElement;
     // "double-click" i.e. click the <label> twice in quick succession:
     label.click();
     label.click();
     // confirm that we are now in editing mode:
     t.equal(document.querySelectorAll('.editing').length, 1, "<li class='editing'> element is visible");
-    t.equal(document.querySelectorAll('.edit')[0].value, model.todos[1].title, "<input class='edit'> has value: " + model.todos[1].title);
+    t.equal((document.querySelectorAll('.edit')[0] as HTMLInputElement).value, model.todos[1].title, "<input class='edit'> has value: " + model.todos[1].title);
     t.end();
 });
 test('5.2.2 Slow clicks do not count as double-click > no edit!', function (t) {
@@ -488,7 +490,7 @@ test('5.2.2 Slow clicks do not count as double-click > no edit!', function (t) {
     };
     // render the view and append it to the DOM inside the `test-app` node:
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
-    var label = document.querySelectorAll('.view > label')[1];
+    var label = document.querySelectorAll('.view > label')[1] as HTMLLabelElement;
     // "double-click" i.e. click the <label> twice in quick succession:
     label.click();
     setTimeout(function () {
@@ -517,7 +519,7 @@ test('5.3 [ENTER] Key in edit mode triggers SAVE action', function (t) {
     // change the
     var updated_title = "Do things that don\'t scale!  ";
     // apply the updated_title to the <input class="edit">:
-    var editInput = document.querySelectorAll('.edit')[0];
+    var editInput = document.querySelectorAll('.edit')[0] as HTMLInputElement;
     editInput.value = updated_title;
     // trigger the [Enter] keyboard key to ADD the new todo:
     document.dispatchEvent(new KeyboardEvent('keyup', { 'keyCode': 13 }));
@@ -544,7 +546,7 @@ test('5.4 SAVE should remove the item if an empty text string was entered', func
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
     t.equal(document.querySelectorAll('.view').length, 2, 'todo count: 2');
     // apply empty string to the <input class="edit">:
-    var editInput = document.querySelectorAll('.edit')[0];
+    var editInput = document.querySelectorAll('.edit')[0] as HTMLInputElement;
     editInput.value = '';
     // trigger the [Enter] keyboard key to ADD the new todo:
     document.dispatchEvent(new KeyboardEvent('keyup', { 'keyCode': 13 }));
@@ -570,7 +572,7 @@ test('5.5 CANCEL should cancel edits on escape', function (t) {
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
     t.equal(document.querySelectorAll('.view > label')[1].textContent, model.todos[1].title, 'todo id 1 has title: ' + model.todos[1].title);
     // apply empty string to the <input class="edit">:
-    document.querySelectorAll('.edit')[0].value = 'Hello World';
+    (document.querySelectorAll('.edit')[0] as HTMLInputElement).value = 'Hello World';
     // trigger the [esc] keyboard key to CANCEL editing
     document.dispatchEvent(new KeyboardEvent('keyup', { 'keyCode': 27 }));
     // confirm the item.title is still the original title:
@@ -629,7 +631,7 @@ test('7. Clear Completed > should display the number of completed items', functi
     var done_count = model.todos.filter(function (i) { return i.done; }).length;
     t.equal(completed_count, done_count, "displays completed items count: " + completed_count);
     // clear completed items:
-    var button = document.querySelectorAll('.clear-completed')[0];
+    var button = document.querySelectorAll('.clear-completed')[0] as HTMLButtonElement;
     button.click();
     // confirm that there is now only ONE todo list item in the DOM:
     t.equal(document.querySelectorAll('.view').length, 1, "after clearing completed items, there is only 1 todo item in the DOM.");

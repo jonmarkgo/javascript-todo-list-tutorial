@@ -1,7 +1,6 @@
 const test = require('tape'); // https://github.com/dwyl/learn-tape
 const fs = require('fs'); // to read html files (see below)
 const path = require('path'); // so we can open files cross-platform
-const { fileURLToPath } = require('url');
 const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf-8');
 const jsdomGlobal = require('jsdom-global');
 jsdomGlobal(html); // https://github.com/rstacruz/jsdom-global

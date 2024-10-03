@@ -1,14 +1,11 @@
 const test = require('tape'); // https://github.com/dwyl/learn-tape
 const fs = require('fs'); // to read html files (see below)
 const path = require('path'); // so we can open files cross-platform
-const { fileURLToPath } = require('url');
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf-8');
-const jsdomGlobal = require('jsdom-global');
-jsdomGlobal(html); // https://github.com/rstacruz/jsdom-global
-const app = require('../lib/todo-app.js'); // functions to test
+const html = fs.readFileSync(path.resolve(__dirname, '../index.html'));
+require('jsdom-global')(html); // https://github.com/rstacruz/jsdom-global
+const app = require('../lib/todo-app'); // functions to test
 const id = 'test-app'; // all tests use 'test-app' as root element
-const elmish = require('../lib/elmish.js'); // import "elmish" core functions
+const elmish = require('../lib/elmish'); // import "elmish" core functions
 test('`model` (Object) has desired keys', function (t) {
     var keys = Object.keys(app.initial_model);
     t.deepEqual(keys, ['todos', 'hash', 'input'], "`todos`, `hash`, and `input` keys are present.");
@@ -17,6 +14,8 @@ test('`model` (Object) has desired keys', function (t) {
 });
 test('`update` default case should return model unmodified', function (t) {
     var model = { todos: [], hash: '', input: '' };
+    var unmodified_model = app.update({ type: 'SET_HASH', hash: '' }, model);
+    t.deepEqual(model, unmodified_model, "model returned unmodified");
     t.end();
 });
 test('update `ADD` a new todo item to model.todos Array', function (t) {

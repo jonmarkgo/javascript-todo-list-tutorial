@@ -70,7 +70,7 @@ export type SignalFunction<A> = (action: A) => void;
 * // returns node with attributes applied
 * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
 */
-export function add_attributes (attrlist: (string | Function)[], node: HTMLElement): HTMLElement {
+export function add_attributes<T extends HTMLElement>(attrlist: (string | Function)[], node: T): T {
   // console.log(attrlist, node);
   if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
     attrlist.forEach(function (attr) { // apply all props in array
@@ -99,13 +99,13 @@ export function add_attributes (attrlist: (string | Function)[], node: HTMLEleme
           node.setAttribute('for', a[1]); // e.g: <label for="toggle-all">
           break;
         case 'href':
-          (node as HTMLAnchorElement).href = a[1]; // e.g: <a href="#/active">Active</a>
+          ((node as unknown) as HTMLAnchorElement).href = a[1]; // e.g: <a href="#/active">Active</a>
           break;
         case 'id':
           node.id = a[1]; // apply element id e.g: <input id="toggle-all">
           break;
         case 'placeholder':
-          (node as HTMLInputElement).placeholder = a[1]; // add placeholder to <input> element
+          ((node as unknown) as HTMLInputElement).placeholder = a[1]; // add placeholder to <input> element
           break;
         case 'style':
           node.setAttribute("style", a[1]); // <div style="display: block;">
@@ -115,7 +115,7 @@ export function add_attributes (attrlist: (string | Function)[], node: HTMLEleme
           break;
         case 'value':
           console.log('value:', a[1]);
-          (node as HTMLInputElement).value = a[1];
+          ((node as unknown) as HTMLInputElement).value = a[1];
           break;
         default:
           break;
@@ -237,7 +237,7 @@ export function ul (attrlist: (string | Function)[], childnodes: HTMLElement[]):
  * // returns the state object with updated hash value:
  * var new_state = elmish.route(model, 'Active', '#/active');
  */
-function route<T extends { hash?: string }> (model: T, title: string, hash: string): T {
+export function route<T extends { hash?: string }> (model: T, title: string, hash: string): T {
   window.location.hash = hash;
   const new_state = JSON.parse(JSON.stringify(model)) as T; // clone model
   new_state.hash = hash;
