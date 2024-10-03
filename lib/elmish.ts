@@ -7,9 +7,9 @@
  * const node = document.getElementById('app');
  * empty(node);
  */
-export function empty (node: HTMLElement): void {
-  while (node.lastChild) {
-    node.removeChild(node.lastChild);
+export function emptyNode(node: HTMLElement): void {
+  while (node.firstChild) {
+    node.removeChild(node.firstChild);
   }
 } // this function produces a (DOM) "mutation" but has no other "side effects".
 
@@ -21,7 +21,7 @@ export function empty (node: HTMLElement): void {
  * @param {String} root_element_id root DOM element in which the app is mounted
  * @param {Function} subscriptions any event listeners the application needs
  */
-export function mount<T extends { todos: any[], hash: string }> (
+export function mountApp<T extends { todos: any[], hash: string }> (
   initial_model: T,
   update: (action: string, model: T, data?: any) => T,
   view: (model: T, signal: SignalFunction<T>) => HTMLElement,
@@ -34,7 +34,7 @@ export function mount<T extends { todos: any[], hash: string }> (
 
   function render (mod: T, sig: SignalFunction<T>, root: HTMLElement): void {
     localStorage.setItem(store_name, JSON.stringify(mod)); // save the model!
-    empty(root); // clear root element (container) before (re)rendering
+    emptyNode(root); // clear root element (container) before (re)rendering
     root.appendChild(view(mod, sig)) // render view based on model & signal
   }
 
@@ -104,7 +104,7 @@ type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 * // returns node with attributes applied
 * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
 */
-export function add_attributes (attrlist: (string | Function)[], node: HTMLElement): HTMLElement {
+export function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
   // console.log(attrlist, node);
   if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
     attrlist.forEach(function (attr) { // apply all props in array
@@ -189,7 +189,7 @@ export function append_childnodes (childnodes: HTMLElement[], parent: HTMLElemen
  * // returns the parent node with the "children" appended
  * var div = elmish.create_element('div', ["class=todoapp"], [h1, input]);
  */
-function create_element (type: string, attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+function create_element (type: string, attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return append_childnodes(childnodes,
     add_attributes(attrlist, document.createElement(type))
   );
@@ -204,47 +204,47 @@ function create_element (type: string, attrlist: (string | Function)[], childnod
  * // returns <section> DOM element with attributes applied & children appended
  * var section = elmish.section(["class=todoapp"], [h1, input]);
  */
-export function section (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function section (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('section', attrlist, childnodes);
 }
 // these are a *bit* repetitive, if you know a better way, please open an issue!
-export function a (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function a (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('a', attrlist, childnodes);
 }
 
-export function button (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function button (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('button', attrlist, childnodes);
 }
 
-export function div (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function div (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('div', attrlist, childnodes);
 }
 
-export function footer (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function footer (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('footer', attrlist, childnodes);
 }
 
-export function header (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function header (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('header', attrlist, childnodes);
 }
 
-export function h1 (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function h1 (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('h1', attrlist, childnodes);
 }
 
-export function input (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function input (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('input', attrlist, childnodes);
 }
 
-export function label (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function label (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('label', attrlist, childnodes);
 }
 
-export function li (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function li (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('li', attrlist, childnodes);
 }
 
-export function span (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function span (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('span', attrlist, childnodes);
 }
 
@@ -260,7 +260,7 @@ export function text (text: string): HTMLElement {
   return span;
 }
 
-export function ul (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function ul (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('ul', attrlist, childnodes);
 }
 
@@ -290,14 +290,14 @@ if (typeof module !== 'undefined' && module.exports) {
     a,
     button,
     div,
-    empty,
+    emptyNode,
     footer,
     input,
     h1,
     header,
     label,
     li,
-    mount,
+    mountApp,
     route,
     section,
     span,
@@ -305,4 +305,16 @@ if (typeof module !== 'undefined' && module.exports) {
     text,
     ul
   }
+}
+
+// Ensure elmish is defined in the global scope for browser environments
+declare global {
+  interface Window {
+    elmish: typeof module.exports;
+  }
+}
+
+// Use a type assertion to inform TypeScript about the elmish property
+if (typeof window !== 'undefined') {
+  (window as Window & typeof globalThis).elmish = module.exports;
 }
