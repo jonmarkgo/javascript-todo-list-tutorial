@@ -7,7 +7,7 @@ exports.update = update;
 exports.view = view;
 exports.subscriptions = subscriptions;
 import { div, button, text } from "../lib/elmish";
-export function update(action: string, model: number): number {
+export function update(action, model) {
     switch (action) { // and an action (String) runs a switch
         case 'inc': return model + 1; // add 1 to the model
         case 'dec': return model - 1; // subtract 1 from model
@@ -15,7 +15,7 @@ export function update(action: string, model: number): number {
         default: return model; // if no action, return curent state.
     } // (default action always returns current)
 }
-export function view(model: number, signal: (action: string) => () => void): HTMLElement {
+export function view(model, signal) {
     return div([], [
         button(["class=inc", "id=inc", "onclick=" + signal('inc').toString()], [text('+')]), // increment
         div(["class=count", "id=count"], [div([], [text(model.toString())])]), // count
@@ -23,10 +23,10 @@ export function view(model: number, signal: (action: string) => () => void): HTM
         button(["class=reset", "id=reset", "onclick=" + signal('reset').toString()], [text('Reset')])
     ]);
 }
-export function subscriptions(signal: (action: string) => () => void): void {
+export function subscriptions(signal) {
     var UP_KEY = 38; // increment the counter when [↑] (up) key is pressed
     var DOWN_KEY = 40; // decrement the counter when [↓] (down) key is pressed
-    document.addEventListener('keyup', function handler(e: KeyboardEvent) {
+    document.addEventListener('keyup', function handler(e) {
         switch (e.keyCode) {
             case UP_KEY:
                 signal('inc')(); // invoke the signal > callback function directly
