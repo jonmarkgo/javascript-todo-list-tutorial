@@ -4,6 +4,7 @@
   "version": "1.0.5",
   "homepage": "https://github.com/dwyl/todomvc-vanilla-javascript-elm-architecture-example",
   "main": "index.html",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/dwyl/todomvc-vanilla-javascript-elm-architecture-example.git"
@@ -27,7 +28,7 @@
     "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
     "start": "node lib/server.js",
     "dev": "live-server",
-    "test": "nyc tape ./test/*.test.js | tap-nyc"
+    "test": "nyc node_modules/.bin/tape ./test/*.test.cjs | tap-nyc"
   },
   "keywords": [
     "Todo List",
