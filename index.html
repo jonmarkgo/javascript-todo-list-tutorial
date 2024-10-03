@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang=”en-GB” data-framework="javascript">
+<html lang="en-GB" data-framework="javascript">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport"
@@ -9,13 +9,15 @@
   href="lib/favicon.ico" type="image/x-icon">
 </head>
 <body>
-  <div id="app"></div>
+  <div id="todo-app">
+    <input id="new-todo" placeholder="What needs to be done?" autofocus>
+  </div>
   <!-- CSS Styles are 100% optional. but they make it look *much* nicer -->
   <link rel="stylesheet" href="lib/todomvc-common-base.css">
   <link rel="stylesheet" href="lib/todomvc-app.css">
-  <script src="lib/elmish.js"></script>
-  <script src="lib/todo-app.js"></script>
-  <script>
+  <script type="module" src="dist/lib/elmish.js"></script>
+  <script type="module" src="dist/lib/todo-app.js"></script>
+  <script type="module">
     var model = {
       todos: [
         // { id: 0, title: "Make something people want.", done: false },
@@ -25,7 +27,8 @@
       hash: '#/', // the "route" to display
       // editing: 2 // edit the 3rd todo list item (which has id == 2)
     };
-    mount(model, update, view, 'app', subscriptions);
+    window.update = update; // Ensure update is in the global scope
+    mountApp(model, update, view, 'app', subscriptions);
   </script>
 
   <!-- Below this point is all related to the Tests for the App -->

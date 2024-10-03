@@ -7,9 +7,9 @@
  * const node = document.getElementById('app');
  * empty(node);
  */
-function empty (node: HTMLElement): void {
-  while (node.lastChild) {
-    node.removeChild(node.lastChild);
+export function emptyNode(node: HTMLElement): void {
+  while (node.firstChild) {
+    node.removeChild(node.firstChild);
   }
 } // this function produces a (DOM) "mutation" but has no other "side effects".
 
@@ -21,8 +21,8 @@ function empty (node: HTMLElement): void {
  * @param {String} root_element_id root DOM element in which the app is mounted
  * @param {Function} subscriptions any event listeners the application needs
  */
-function mount<T> (
-  model: T,
+export function mountApp<T extends { todos: any[], hash: string }> (
+  initial_model: T,
   update: (action: string, model: T, data?: any) => T,
   view: (model: T, signal: SignalFunction<T>) => HTMLElement,
   root_element_id: string,
@@ -34,20 +34,58 @@ function mount<T> (
 
   function render (mod: T, sig: SignalFunction<T>, root: HTMLElement): void {
     localStorage.setItem(store_name, JSON.stringify(mod)); // save the model!
-    empty(root); // clear root element (container) before (re)rendering
+    emptyNode(root); // clear root element (container) before (re)rendering
     root.appendChild(view(mod, sig)) // render view based on model & signal
   }
 
-  function signal(action: string, data?: any, model?: T): () => void {
+  function signal(action: string, data?: any): () => void {
     return function callback(): void {
-      model = JSON.parse(localStorage.getItem(store_name) || '{}') as T;
+      const model = getStoredModel();
+      console.log('Model before update:', JSON.stringify(model, null, 2));
       const updatedModel = update(action, model, data); // update model for action
-      render(updatedModel, signal, ROOT);
+      if (ROOT) {
+        render(updatedModel, signal, ROOT);
+      }
     };
   }
 
-  model = JSON.parse(localStorage.getItem(store_name) || '{}') as T || model;
-  render(model, signal, ROOT);
+  function getStoredModel(): T {
+    const storedModel = localStorage.getItem(store_name);
+    let model: T = JSON.parse(JSON.stringify(initial_model)); // Deep clone initial_model
+
+    if (storedModel) {
+      try {
+        const parsedModel = JSON.parse(storedModel) as Partial<T>;
+        // Merge parsed model with initial_model, ensuring correct structure
+        if (parsedModel && typeof parsedModel === 'object' && !Array.isArray(parsedModel)) {
+          for (const key in parsedModel) {
+            if (key in model) {
+              (model as any)[key] = parsedModel[key];
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing stored model:', error);
+      }
+    }
+
+    // Ensure the model has the correct structure
+    if (!Array.isArray(model.todos)) {
+      model.todos = [];
+    }
+    if (typeof model.hash !== 'string') {
+      model.hash = "#/";
+    }
+
+    console.log('Model after initialization:', JSON.stringify(model, null, 2));
+    return model;
+  }
+
+  const model = getStoredModel();
+
+  if (ROOT) {
+    render(model, signal, ROOT);
+  }
   if (subscriptions && typeof subscriptions === 'function') {
     subscriptions(signal);
   }
@@ -66,12 +104,15 @@ type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 * // returns node with attributes applied
 * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
 */
-function add_attributes (attrlist: (string | Function)[], node: HTMLElement): HTMLElement {
+export function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
   // console.log(attrlist, node);
   if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
     attrlist.forEach(function (attr) { // apply all props in array
       // do not attempt to "split" an onclick function as it's not a string!
-      if (typeof attr === 'function') { node.onclick = attr; return node; }
+      if (typeof attr === 'function') {
+        (node as HTMLElement & { onclick: (this: GlobalEventHandlers, ev: MouseEvent) => any }).onclick = attr as (this: GlobalEventHandlers, ev: MouseEvent) => any;
+        return node;
+      }
       // apply any attributes that are *not* functions (i.e. Strings):
       const a = (attr as string).split('=');
       switch(a[0]) {
@@ -130,7 +171,7 @@ function add_attributes (attrlist: (string | Function)[], node: HTMLElement): HT
  * // returns the parent node with the "children" appended
  * var parent = elmish.append_childnodes([div, p, section], parent);
  */
-function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTMLElement {
+export function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTMLElement {
   if(childnodes && Array.isArray(childnodes) && childnodes.length > 0) {
     childnodes.forEach(function (el) { parent.appendChild(el) });
   }
@@ -148,7 +189,7 @@ function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTM
  * // returns the parent node with the "children" appended
  * var div = elmish.create_element('div', ["class=todoapp"], [h1, input]);
  */
-function create_element (type: string, attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+function create_element (type: string, attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return append_childnodes(childnodes,
     add_attributes(attrlist, document.createElement(type))
   );
@@ -163,61 +204,63 @@ function create_element (type: string, attrlist: (string | Function)[], childnod
  * // returns <section> DOM element with attributes applied & children appended
  * var section = elmish.section(["class=todoapp"], [h1, input]);
  */
-function section (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function section (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('section', attrlist, childnodes);
 }
 // these are a *bit* repetitive, if you know a better way, please open an issue!
-function a (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function a (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('a', attrlist, childnodes);
 }
 
-function button (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function button (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('button', attrlist, childnodes);
 }
 
-function div (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function div (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('div', attrlist, childnodes);
 }
 
-function footer (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function footer (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('footer', attrlist, childnodes);
 }
 
-function header (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function header (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('header', attrlist, childnodes);
 }
 
-function h1 (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function h1 (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('h1', attrlist, childnodes);
 }
 
-function input (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function input (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('input', attrlist, childnodes);
 }
 
-function label (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function label (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('label', attrlist, childnodes);
 }
 
-function li (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function li (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('li', attrlist, childnodes);
 }
 
-function span (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function span (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('span', attrlist, childnodes);
 }
 
-function strong (text_str: string): HTMLElement {
+export function strong (text_str: string): HTMLElement {
   const el = document.createElement("strong");
   el.innerHTML = text_str;
   return el;
 }
 
-function text (text: string): Text {
-  return document.createTextNode(text);
+export function text(text: string): HTMLElement {
+  const span = document.createElement('span');
+  span.textContent = text;
+  return span;
 }
 
-function ul (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+export function ul (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('ul', attrlist, childnodes);
 }
 
@@ -231,7 +274,7 @@ function ul (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLEl
  * // returns the state object with updated hash value:
  * var new_state = elmish.route(model, 'Active', '#/active');
  */
-function route<T extends { hash?: string }> (model: T, title: string, hash: string): T {
+export function route<T extends { hash?: string }> (model: T, title: string, hash: string): T {
   window.location.hash = hash;
   const new_state = JSON.parse(JSON.stringify(model)) as T; // clone model
   new_state.hash = hash;
@@ -247,14 +290,14 @@ if (typeof module !== 'undefined' && module.exports) {
     a,
     button,
     div,
-    empty,
+    emptyNode,
     footer,
     input,
     h1,
     header,
     label,
     li,
-    mount,
+    mountApp,
     route,
     section,
     span,
@@ -262,4 +305,16 @@ if (typeof module !== 'undefined' && module.exports) {
     text,
     ul
   }
+}
+
+// Ensure elmish is defined in the global scope for browser environments
+declare global {
+  interface Window {
+    elmish: typeof module.exports;
+  }
+}
+
+// Use a type assertion to inform TypeScript about the elmish property
+if (typeof window !== 'undefined') {
+  (window as Window & typeof globalThis).elmish = module.exports;
 }
