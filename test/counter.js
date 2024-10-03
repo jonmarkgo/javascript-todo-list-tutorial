@@ -1,16 +1,11 @@
-"use strict";
 // this file is borrowed from:
 // https://github.com/dwyl/learn-elm-architecture-in-javascript/blob/master/examples/counter-reset/counter.js
 // it is included here purely for testing the "elmish" functions.
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.update = update;
-exports.view = view;
-exports.mount = mount;
 // Define the Component's Actions:
 var Inc = 'inc'; // increment the counter
 var Dec = 'dec'; // decrement the counter
 var Res = 'reset'; // reset counter: git.io/v9KJk
-function update(action, model) {
+export function update(action, model) {
     switch (action) { // and an action (String) runs a switch
         case Inc: return model + 1; // add 1 to the model
         case Dec: return model - 1; // subtract 1 from model
@@ -18,7 +13,7 @@ function update(action, model) {
         default: return model; // if no action, return curent state.
     } // (default action always returns current)
 }
-function view(model, signal) {
+export function view(model, signal) {
     return container([
         button('+', signal, Inc), // then iterate to append them
         div('count', model.toString()), // create div with stat as text
@@ -27,7 +22,7 @@ function view(model, signal) {
     ]); // forEach is ES5 so IE9+
 } // yes, for loop is "faster" than forEach, but readability trumps "perf" here!
 // Mount Function receives all MUV and mounts the app in the "root" DOM Element
-function mount(model, update, view, root_element_id) {
+export function mount(model, update, view, root_element_id) {
     var root = document.getElementById(root_element_id); // root DOM element
     if (!root)
         return;
