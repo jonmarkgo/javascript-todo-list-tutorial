@@ -10,7 +10,7 @@ const Res = 'reset';                   // reset counter: git.io/v9KJk
 type Action = typeof Inc | typeof Dec | typeof Res;
 type Model = number;
 
-function update(action: Action, model: Model): Model {     // Update function takes the current state
+function counterUpdate(action: Action, model: Model): Model {     // Update function takes the current state
   switch(action) {                   // and an action (String) runs a switch
     case Inc: return model + 1;      // add 1 to the model
     case Dec: return model - 1;      // subtract 1 from model
@@ -21,7 +21,7 @@ function update(action: Action, model: Model): Model {     // Update function ta
 
 type Signal = (action: Action) => () => void;
 
-function view(model: Model, signal: Signal): HTMLElement {
+function counterView(model: Model, signal: Signal): HTMLElement {
   return container([                           // Store DOM nodes in an array
     button('+', signal, Inc),                  // then iterate to append them
     div('count', model.toString()),            // create div with stat as text
@@ -36,12 +36,14 @@ function mount(model: Model, update: (action: Action, model: Model) => Model, vi
   if (!root) return;
   function signal(action: Action): () => void {          // signal function takes action
     return function callback(): void {     // and returns callback
-      model = update(action, model); // update model according to action
-      empty(root);
-      root.appendChild(view(model, signal)); // subsequent re-rendering
+      model = counterUpdate(action, model); // update model according to action
+      if (root) {
+        empty(root);
+        root.appendChild(counterView(model, signal)); // subsequent re-rendering
+      }
     };
   };
-  root.appendChild(view(model, signal));    // render initial model (once)
+  root.appendChild(counterView(model, signal));    // render initial model (once)
 }
 
 // The following are "Helper" Functions which each "Do ONLY One Thing" and are
@@ -88,9 +90,9 @@ function container(elements: HTMLElement[]): HTMLElement {
 /* istanbul ignore else */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    view,
+    counterView,
     mount,
-    update,
+    counterUpdate,
     div,
     button,
     empty,
