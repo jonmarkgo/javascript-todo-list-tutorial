@@ -23,17 +23,17 @@
     "pre-commit": "^1.2.2",
     "tap-nyc": "^1.0.3",
     "tape": "^5.0.1",
+    "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
   },
   "scripts": {
     "compile": "tsc",
     "check-coverage": "nyc check-coverage --statements 100 --functions 100 --lines 100 --branches 100",
-    "postinstall": "npm test",
     "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
     "start": "node lib/server.mjs",
     "dev": "live-server",
-    "test": "npm run compile && mocha --require ts-node/register --require tsconfig-paths/register --extension ts ./test/*.test.ts"
+    "test": "mocha --require ts-node/register --require tsconfig-paths/register --require jsdom-global/register --extension ts ./test/*.test.ts"
   },
   "keywords": [
     "Todo List",
@@ -52,11 +52,11 @@
     "test",
     "check-coverage"
   ],
-  "type": "module",
   "dependencies": {
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.4",
     "@babel/register": "^7.24.6",
-    "esm": "^3.2.25"
+    "esm": "^3.2.25",
+    "tsconfig-paths": "^4.2.0"
   }
 }

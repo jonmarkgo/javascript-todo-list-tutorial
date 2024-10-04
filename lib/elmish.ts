@@ -1,4 +1,9 @@
 /**
+ * Type definition for the SignalFunction used in the application.
+ */
+export type SignalFunction<T> = (action: string, data?: any) => void;
+
+/**
  * `empty` the contents of a given DOM element "node" (before re-rendering).
  * This is the *fastest* way according to: stackoverflow.com/a/3955238/1148249
  * @param  {Object} node the exact DOM node you want to empty the contents of.
@@ -21,6 +26,7 @@ export function emptyNode(node: HTMLElement): void {
  * @param {String} root_element_id root DOM element in which the app is mounted
  * @param {Function} subscriptions any event listeners the application needs
  */
+
 export function mountApp<T extends { todos: any[], hash: string }> (
   initial_model: T,
   update: (action: string, model: T, data?: any) => T,
@@ -32,22 +38,22 @@ export function mountApp<T extends { todos: any[], hash: string }> (
   if (!ROOT) throw new Error(`Element with id ${root_element_id} not found`);
   const store_name = 'todos-elmish_' + root_element_id; // test-app !== app
 
-  function render (mod: T, sig: SignalFunction<T>, root: HTMLElement): void {
+  function render (mod: T, sig: SignalFunction<T>, root: HTMLElement): HTMLElement {
     localStorage.setItem(store_name, JSON.stringify(mod)); // save the model!
     emptyNode(root); // clear root element (container) before (re)rendering
-    root.appendChild(view(mod, sig)) // render view based on model & signal
+    const renderedElement = view(mod, sig); // render view based on model & signal
+    root.appendChild(renderedElement);
+    return renderedElement;
   }
 
-  function signal(action: string, data?: any): () => void {
-    return function callback(): void {
-      const model = getStoredModel();
-      console.log('Model before update:', JSON.stringify(model, null, 2));
-      const updatedModel = update(action, model, data); // update model for action
-      if (ROOT) {
-        render(updatedModel, signal, ROOT);
-      }
-    };
-  }
+  const signal: SignalFunction<T> = (action: string, data?: any): void => {
+    const model = getStoredModel();
+    console.log('Model before update:', JSON.stringify(model, null, 2));
+    const updatedModel = update(action, model, data); // update model for action
+    if (ROOT) {
+      render(updatedModel, signal, ROOT);
+    }
+  };
 
   function getStoredModel(): T {
     const storedModel = localStorage.getItem(store_name);
@@ -86,12 +92,12 @@ export function mountApp<T extends { todos: any[], hash: string }> (
   if (ROOT) {
     render(model, signal, ROOT);
   }
+
   if (subscriptions && typeof subscriptions === 'function') {
     subscriptions(signal);
   }
 }
 
-type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 
 /**
 * `add_attributes` applies the desired attribute(s) to the specified DOM node.
@@ -136,13 +142,13 @@ export function add_attributes (attrlist: (string | ((this: GlobalEventHandlers,
           node.setAttribute('for', a[1]); // e.g: <label for="toggle-all">
           break;
         case 'href':
-          (node as HTMLAnchorElement).href = a[1]; // e.g: <a href="#/active">Active</a>
+          ((node as unknown) as HTMLAnchorElement).href = a[1]; // e.g: <a href="#/active">Active</a>
           break;
         case 'id':
           node.id = a[1]; // apply element id e.g: <input id="toggle-all">
           break;
         case 'placeholder':
-          (node as HTMLInputElement).placeholder = a[1]; // add placeholder to <input> element
+          ((node as unknown) as HTMLInputElement).placeholder = a[1]; // add placeholder to <input> element
           break;
         case 'style':
           node.setAttribute("style", a[1]); // <div style="display: block;">
@@ -152,7 +158,7 @@ export function add_attributes (attrlist: (string | ((this: GlobalEventHandlers,
           break;
         case 'value':
           console.log('value:', a[1]);
-          (node as HTMLInputElement).value = a[1];
+          ((node as unknown) as HTMLInputElement).value = a[1];
           break;
         default:
           break;
@@ -189,7 +195,7 @@ export function append_childnodes (childnodes: HTMLElement[], parent: HTMLElemen
  * // returns the parent node with the "children" appended
  * var div = elmish.create_element('div', ["class=todoapp"], [h1, input]);
  */
-function create_element (type: string, attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function create_element (type: string, attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return append_childnodes(childnodes,
     add_attributes(attrlist, document.createElement(type))
   );
@@ -304,7 +310,7 @@ if (typeof module !== 'undefined' && module.exports) {
     strong,
     text,
     ul
-  }
+  };
 }
 
 // Ensure elmish is defined in the global scope for browser environments

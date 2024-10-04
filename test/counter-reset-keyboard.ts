@@ -6,33 +6,15 @@
  in the broweser, the "elmish" DOM functions are loaded in a <script> tag */
 /* istanbul ignore next */
 if (typeof require !== 'undefined' && typeof window === 'undefined') {
-  const elmish = require('../lib/elmish.js');
+  var { button, div, empty, mount, text } = require('../lib/elmish.js');
 }
 
 import * as elmish from '../lib/elmish';
+import { Model, Action, Signal, update, view } from './counter';
 
 type ResetCounterModel = number;
 type ResetCounterAction = 'inc' | 'dec' | 'reset';
-
-function update (action: ResetCounterAction, model: ResetCounterModel): ResetCounterModel {    // Update function takes the current state
-  switch(action) {                   // and an action (String) runs a switch
-    case 'inc': return model + 1;    // add 1 to the model
-    case 'dec': return model - 1;    // subtract 1 from model
-    case 'reset': return 0;          // reset state to 0 (Zero) git.io/v9KJk
-    default: return model;           // if no action, return curent state.
-  }                                  // (default action always returns current)
-}
-
 type ResetCounterSignal = (action: ResetCounterAction) => (event: Event) => void;
-
-function view (model: ResetCounterModel, signal: ResetCounterSignal): HTMLElement {
-  return elmish.div(['counter'], [
-    elmish.button(['+', (e: Event) => signal('inc')(e)], []), // increment
-    elmish.div(['count'], [(() => { const span = document.createElement('span'); span.appendChild(document.createTextNode(model.toString())); return span; })()]), // count
-    elmish.button(['-', (e: Event) => signal('dec')(e)], []), // decrement
-    elmish.button(['Reset', (e: Event) => signal('reset')(e)], [])
-  ]);
-}
 
 function subscriptions (signal: ResetCounterSignal): void {
   const UP_KEY = 38; // increment the counter when [↑] (up) key is pressed
