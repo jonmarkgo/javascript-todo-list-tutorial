@@ -3243,6 +3243,31 @@ https://github.com/dwyl/learn-github-pages
 
 # Thanks for Learning with Us!
 
+## Running the TypeScript Application
+
+To set up and run the TypeScript application, follow these steps:
+
+1. Install the necessary dependencies:
+   ```sh
+   npm install
+   ```
+
+2. Compile the TypeScript files:
+   ```sh
+   npm run compile
+   ```
+
+3. Run the test suite to ensure all tests pass:
+   ```sh
+   npm test
+   ```
+
+4. Start the application:
+   ```sh
+   npm start
+   ```
+
+5. Open your browser and navigate to `http://localhost:8000/` to view the application.
 
 <!--
 ## What _Next_?
