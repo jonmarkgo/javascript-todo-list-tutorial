@@ -2,15 +2,17 @@
 // https://github.com/dwyl/learn-elm-architecture-in-javascript/blob/master/examples/counter-reset/counter.js
 // it is included here purely for testing the "elmish" functions.
 
+import { div, button, empty } from '../lib/elmish';
+
 // Define the Component's Actions:
 const Inc = 'inc';                     // increment the counter
 const Dec = 'dec';                     // decrement the counter
 const Res = 'reset';                   // reset counter: git.io/v9KJk
 
-type SimpleCounterAction = typeof Inc | typeof Dec | typeof Res;
-type SimpleCounterModel = number;
+export type Action = typeof Inc | typeof Dec | typeof Res;
+export type Model = number;
 
-function updateSimpleCounter(action: SimpleCounterAction, model: SimpleCounterModel): SimpleCounterModel {     // Update function takes the current state
+export function update(action: Action, model: Model): Model {     // Update function takes the current state
   switch(action) {                   // and an action (String) runs a switch
     case Inc: return model + 1;      // add 1 to the model
     case Dec: return model - 1;      // subtract 1 from model
@@ -19,22 +21,24 @@ function updateSimpleCounter(action: SimpleCounterAction, model: SimpleCounterMo
   }                                  // (default action always returns current)
 }
 
-type SimpleCounterSignal = (action: SimpleCounterAction) => () => void;
+export type Signal = (action: Action) => () => void;
 
-function viewSimpleCounter(model: SimpleCounterModel, signal: SimpleCounterSignal): HTMLElement {
+export function view(model: Model, signal: Signal): HTMLElement {
+  const span = document.createElement('span');
+  span.innerText = model.toString();
   return container([                           // Store DOM nodes in an array
-    button('+', signal, Inc),                  // then iterate to append them
-    div('count', model.toString()),            // create div with stat as text
-    button('-', signal, Dec),                  // decrement counter
-    button('Reset', signal, Res)               // reset counter
+    button(['+', signal(Inc)], []),            // then iterate to append them
+    div(['count'], [span]),                    // create div with stat as text
+    button(['-', signal(Dec)], []),            // decrement counter
+    button(['Reset', signal(Res)], [])         // reset counter
   ]); // forEach is ES5 so IE9+
 } // yes, for loop is "faster" than forEach, but readability trumps "perf" here!
 
 // Mount Function receives all MUV and mounts the app in the "root" DOM Element
-function mountCounter(model: SimpleCounterModel, update: (action: SimpleCounterAction, model: SimpleCounterModel) => SimpleCounterModel, view: (model: SimpleCounterModel, signal: SimpleCounterSignal) => HTMLElement, root_element_id: string): void {
+export function mount(model: Model, update: (action: Action, model: Model) => Model, view: (model: Model, signal: Signal) => HTMLElement, root_element_id: string): void {
   const root = document.getElementById(root_element_id); // root DOM element
   if (!root) return;
-  function signal(action: SimpleCounterAction): () => void {          // signal function takes action
+  function signal(action: Action): () => void {          // signal function takes action
     return function callback(): void {     // and returns callback
       model = update(action, model); // update model according to action
       if (root) {
@@ -44,41 +48,18 @@ function mountCounter(model: SimpleCounterModel, update: (action: SimpleCounterA
     };
   };
   if (root) {
-    root.appendChild(viewSimpleCounter(model, signal));    // render initial model (once)
+    root.appendChild(view(model, signal));    // render initial model (once)
   }
 }
 
 // The following are "Helper" Functions which each "Do ONLY One Thing" and are
 // used in the "View" function to render the Model (State) to the Browser DOM:
 
-// empty the contents of a given DOM element "node" (before re-rendering)
-function empty(node: HTMLElement): void {
-  while (node.firstChild) {
-    node.removeChild(node.firstChild);
-  }
-} // Inspired by: stackoverflow.com/a/3955238/1148249
 
-function button(text: string, signal: SimpleCounterSignal, action: SimpleCounterAction): HTMLButtonElement {
-  const button = document.createElement('button');
-  const textNode = document.createTextNode(text);    // human-readable button text
-  button.appendChild(textNode);                    // text goes *inside* not attrib
-  button.className = action;                   // use action as CSS class
-  button.id = action;
-  // console.log(signal, ' action:', action)
-  button.onclick = signal(action);             // onclick tells how to process
-  return button;                               // return the DOM node(s)
-} // how to create a button in JavaScript: stackoverflow.com/a/8650996/1148249
 
-function div(divid: string, text?: string): HTMLDivElement {
-  const div = document.createElement('div');
-  div.id = divid;
-  div.className = divid;
-  if(text !== undefined) { // if text is passed in render it in a "Text Node"
-    const txt = document.createTextNode(text);
-    div.appendChild(txt);
-  }
-  return div;
-}
+
+
+
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/section
 function container(elements: HTMLElement[]): HTMLElement {
@@ -90,13 +71,8 @@ function container(elements: HTMLElement[]): HTMLElement {
 
 /* The code block below ONLY Applies to tests run using Node.js */
 /* istanbul ignore else */
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    viewSimpleCounter,
-    mountCounter,
-    updateSimpleCounter,
-    div,
-    button,
-    empty,
-  }
-}
+export {
+  div,
+  button,
+  empty,
+};

@@ -7,9 +7,9 @@
  * const node = document.getElementById('app');
  * empty(node);
  */
-export function emptyNode(node: HTMLElement): void {
-  while (node.firstChild) {
-    node.removeChild(node.firstChild);
+export function empty(node: HTMLElement): void {
+  while (node.lastChild) {
+    node.removeChild(node.lastChild);
   }
 } // this function produces a (DOM) "mutation" but has no other "side effects".
 
@@ -21,33 +21,32 @@ export function emptyNode(node: HTMLElement): void {
  * @param {String} root_element_id root DOM element in which the app is mounted
  * @param {Function} subscriptions any event listeners the application needs
  */
-export function mountApp<T extends { todos: any[], hash: string }> (
+export function mount<T extends { todos: any[], hash: string }, A> (
   initial_model: T,
-  update: (action: string, model: T, data?: any) => T,
-  view: (model: T, signal: SignalFunction<T>) => HTMLElement,
+  update: (action: A, model: T, data?: any) => T,
+  view: (model: T, signal: (action: A) => void) => HTMLElement,
   root_element_id: string,
-  subscriptions?: (signal: SignalFunction<T>) => void
+  subscriptions?: (signal: (action: A) => void) => void
 ): void {
   const ROOT = document.getElementById(root_element_id); // root DOM element
   if (!ROOT) throw new Error(`Element with id ${root_element_id} not found`);
   const store_name = 'todos-elmish_' + root_element_id; // test-app !== app
 
-  function render (mod: T, sig: SignalFunction<T>, root: HTMLElement): void {
+  function render (mod: T, sig: (action: A) => void, root: HTMLElement): HTMLElement {
     localStorage.setItem(store_name, JSON.stringify(mod)); // save the model!
-    emptyNode(root); // clear root element (container) before (re)rendering
-    root.appendChild(view(mod, sig)) // render view based on model & signal
+    empty(root); // clear root element (container) before (re)rendering
+    const renderedView = view(mod, sig);
+    root.appendChild(renderedView); // render view based on model & signal
+    return renderedView;
   }
 
-  function signal(action: string, data?: any): () => void {
-    return function callback(): void {
-      const model = getStoredModel();
-      console.log('Model before update:', JSON.stringify(model, null, 2));
-      const updatedModel = update(action, model, data); // update model for action
-      if (ROOT) {
-        render(updatedModel, signal, ROOT);
-      }
-    };
-  }
+  const signal: (action: A) => void = (action: A) => {
+    model = JSON.parse(localStorage.getItem(store_name) || '{}') as T;
+    const updatedModel = update(action, model); // update model for action
+    if (ROOT) {
+      render(updatedModel, signal, ROOT);
+    }
+  };
 
   function getStoredModel(): T {
     const storedModel = localStorage.getItem(store_name);
@@ -81,7 +80,7 @@ export function mountApp<T extends { todos: any[], hash: string }> (
     return model;
   }
 
-  const model = getStoredModel();
+  let model = getStoredModel();
 
   if (ROOT) {
     render(model, signal, ROOT);
@@ -91,7 +90,7 @@ export function mountApp<T extends { todos: any[], hash: string }> (
   }
 }
 
-type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
+export type SignalFunction<A> = (action: A) => void;
 
 /**
 * `add_attributes` applies the desired attribute(s) to the specified DOM node.
@@ -104,13 +103,13 @@ type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 * // returns node with attributes applied
 * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
 */
-export function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
+export function add_attributes<T extends HTMLElement>(attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: T): T {
   // console.log(attrlist, node);
   if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
     attrlist.forEach(function (attr) { // apply all props in array
       // do not attempt to "split" an onclick function as it's not a string!
       if (typeof attr === 'function') {
-        (node as HTMLElement & { onclick: (this: GlobalEventHandlers, ev: MouseEvent) => any }).onclick = attr as (this: GlobalEventHandlers, ev: MouseEvent) => any;
+        node.onclick = attr as (this: GlobalEventHandlers, ev: MouseEvent) => any;
         return node;
       }
       // apply any attributes that are *not* functions (i.e. Strings):
@@ -136,13 +135,13 @@ export function add_attributes (attrlist: (string | ((this: GlobalEventHandlers,
           node.setAttribute('for', a[1]); // e.g: <label for="toggle-all">
           break;
         case 'href':
-          (node as HTMLAnchorElement).href = a[1]; // e.g: <a href="#/active">Active</a>
+          ((node as unknown) as HTMLAnchorElement).href = a[1]; // e.g: <a href="#/active">Active</a>
           break;
         case 'id':
           node.id = a[1]; // apply element id e.g: <input id="toggle-all">
           break;
         case 'placeholder':
-          (node as HTMLInputElement).placeholder = a[1]; // add placeholder to <input> element
+          ((node as unknown) as HTMLInputElement).placeholder = a[1]; // add placeholder to <input> element
           break;
         case 'style':
           node.setAttribute("style", a[1]); // <div style="display: block;">
@@ -152,7 +151,7 @@ export function add_attributes (attrlist: (string | ((this: GlobalEventHandlers,
           break;
         case 'value':
           console.log('value:', a[1]);
-          (node as HTMLInputElement).value = a[1];
+          ((node as unknown) as HTMLInputElement).value = a[1];
           break;
         default:
           break;
@@ -189,7 +188,7 @@ export function append_childnodes (childnodes: HTMLElement[], parent: HTMLElemen
  * // returns the parent node with the "children" appended
  * var div = elmish.create_element('div', ["class=todoapp"], [h1, input]);
  */
-function create_element (type: string, attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function create_element (type: string, attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return append_childnodes(childnodes,
     add_attributes(attrlist, document.createElement(type))
   );
@@ -290,14 +289,12 @@ if (typeof module !== 'undefined' && module.exports) {
     a,
     button,
     div,
-    emptyNode,
     footer,
     input,
     h1,
     header,
     label,
     li,
-    mountApp,
     route,
     section,
     span,

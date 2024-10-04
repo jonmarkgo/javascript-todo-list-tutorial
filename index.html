@@ -15,9 +15,9 @@
   <!-- CSS Styles are 100% optional. but they make it look *much* nicer -->
   <link rel="stylesheet" href="lib/todomvc-common-base.css">
   <link rel="stylesheet" href="lib/todomvc-app.css">
-  <script type="module" src="dist/lib/elmish.js"></script>
-  <script type="module" src="dist/lib/todo-app.js"></script>
   <script type="module">
+    import { mount } from '/dist/lib/elmish.js';
+    import { update, view, subscriptions } from '/dist/lib/todo-app.js';
     var model = {
       todos: [
         // { id: 0, title: "Make something people want.", done: false },
@@ -28,7 +28,7 @@
       // editing: 2 // edit the 3rd todo list item (which has id == 2)
     };
     window.update = update; // Ensure update is in the global scope
-    mountApp(model, update, view, 'app', subscriptions);
+    mount(model, update, view, 'app', subscriptions);
   </script>
 
   <!-- Below this point is all related to the Tests for the App -->

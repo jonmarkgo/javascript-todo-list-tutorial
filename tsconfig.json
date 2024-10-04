@@ -14,7 +14,7 @@
     "emitDecoratorMetadata": true,
     "types": ["node", "mocha"]
   },
-  "include": ["test/**/*.ts", "lib/**/*.ts"],
+  "include": ["lib/**/*.ts", "test/**/*.ts"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node"
