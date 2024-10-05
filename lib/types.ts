@@ -23,7 +23,7 @@ export type Action =
   | { type: 'SET_VISIBILITY'; filter: string };
 
 export interface Signal {
-  (action: string, data?: any): void;
+  (action: Action): void;
 }
 
 export interface Test {

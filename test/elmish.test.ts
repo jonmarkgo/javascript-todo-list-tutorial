@@ -223,8 +223,8 @@ test('test elmish.add_attributes attrlist null (no effect)', function (t) {
   let div = document.createElement('div');
   div.id = 'divid';
   // "Clone" the div DOM node before invoking elmish.attributes to compare
-  const clone = div.cloneNode(true);
-  div = add_attributes([], div as HTMLDivElement); // should not "explode"
+  const clone = div.cloneNode(true) as HTMLDivElement;
+  div = add_attributes([], div) as HTMLDivElement; // should not "explode"
   t.deepEqual(div, clone, "<div> has not been altered");
   t.end();
 });
@@ -265,7 +265,7 @@ test('elmish.section creates a <section> HTML element', function (t) {
 });
 
 test('elmish create <header> view using HTML element functions', function (t) {
-import { append_childnodes, section, header, h1, input, createText, empty } from '../lib/elmish';
+
   const rootElement = document.getElementById(id);
   if (rootElement) {
     append_childnodes([
@@ -375,9 +375,9 @@ test('elmish create <footer> view using HTML DOM functions', function (t) {
   t.equal(selected, "All", "All is selected by default");
   empty(document.getElementById(id));
   t.end();
-}); // Ensure this closing bracket is correctly placed
-
-test('elmish.route updates the url hash and sets history', function (t) {
+}
+});
+// Remove duplicate test definition
 
 
 
@@ -546,5 +546,5 @@ test('subscriptions test using counter-reset-keyaboard ⌨️', function (t) {
 
   localStorage.removeItem('todos-elmish_' + id);
   empty(root);
-  t.end()
+  t.end();
 });

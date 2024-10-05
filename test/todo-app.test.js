@@ -59,31 +59,31 @@ var elmish = __importStar(require("../lib/elmish")); // import "elmish" core fun
     var model = JSON.parse(JSON.stringify(app.model)); // initial state
     var model_with_todo = app.update({ type: 'ADD', title: "Toggle a todo list item" }, model);
     var item = model_with_todo.todos[0];
-    var model_todo_completed = app.update({ type: 'TOGGLE', id: item.id }, model_with_todo);
+    var model_todo_done = app.update({ type: 'TOGGLE', id: item.id }, model_with_todo);
     var expected = { id: 1, title: "Toggle a todo list item", completed: true };
-    t.deepEqual(model_todo_completed.todos[0], expected, "Todo list item Toggled.");
+    t.deepEqual(model_todo_done.todos[0], expected, "Todo list item Toggled.");
     t.end();
 });
 (0, tape_1.default)('`TOGGLE` (undo) a todo item from completed=true to completed=false', function (t) {
     var model = JSON.parse(JSON.stringify(app.model)); // initial state
     var model_with_todo = app.update({ type: 'ADD', title: "Toggle a todo list item" }, model);
     var item = model_with_todo.todos[0];
-    var model_todo_completed = app.update({ type: 'TOGGLE', id: item.id }, model_with_todo);
+    var model_todo_done = app.update({ type: 'TOGGLE', id: item.id }, model_with_todo);
     var expected = { id: 1, title: "Toggle a todo list item", completed: true };
-    t.deepEqual(model_todo_completed.todos[0], expected, "Toggled completed=false >> true");
+    t.deepEqual(model_todo_done.todos[0], expected, "Toggled completed=false >> true");
     // add another item before "undoing" the original one:
-    var model_second_item = app.update({ type: 'ADD', title: "Another todo" }, model_todo_completed);
+    var model_second_item = app.update({ type: 'ADD', title: "Another todo" }, model_todo_done);
     t.equal(model_second_item.todos.length, 2, "there are TWO todo items");
     // Toggle the original item such that: completed=true >> completed=false
-    var model_todo_uncompleted = app.update({ type: 'TOGGLE', id: item.id }, model_second_item);
-    var uncompleted = { id: 1, title: "Toggle a todo list item", completed: false };
-    t.deepEqual(model_todo_uncompleted.todos[0], uncompleted, "Todo item Toggled > uncompleted!");
+    var model_todo_undone = app.update({ type: 'TOGGLE', id: item.id }, model_second_item);
+    var undone = { id: 1, title: "Toggle a todo list item", completed: false };
+    t.deepEqual(model_todo_undone.todos[0], undone, "Todo item Toggled > undone!");
     t.end();
 });
 // this is used for testing view functions which require a signal function
 function mock_signal() {
     return function inner_function() {
-        console.log('completed');
+        console.log('done');
     };
 }
 (0, tape_1.default)('render_item HTML for a single Todo Item', function (t) {
@@ -116,7 +116,7 @@ function mock_signal() {
 (0, tape_1.default)('render_item HTML without a valid signal function', function (t) {
     var model = {
         todos: [
-            { id: 1, title: "Learn Elm Architecture", done: true },
+            { id: 1, title: "Learn Elm Architecture", completed: true },
         ],
         hash: '#/', // the "route" to display
         visibility: 'all' // Add the missing visibility property
@@ -124,15 +124,15 @@ function mock_signal() {
     // render the ONE todo list item:
     var rootElement = document.getElementById(id);
     if (rootElement) {
-        rootElement.appendChild(app.render_item(model.todos[0], model));
+        rootElement.appendChild(app.render_item(model.todos[0], model, mock_signal));
     }
-    var doneElement = document.querySelectorAll('.completed')[0];
-    if (doneElement) {
-        t.equal(doneElement.textContent, 'Learn Elm Architecture', 'Done: Learn "TEA"');
+    var completedElement = document.querySelectorAll('.completed')[0];
+    if (completedElement) {
+        t.equal(completedElement.textContent, 'Learn Elm Architecture', 'Completed: Learn "TEA"');
     }
     var checkedElement = document.querySelectorAll('input')[0];
     if (checkedElement) {
-        t.equal(checkedElement.checked, true, 'Done: ' + model.todos[0].title + " is done=true");
+        t.equal(checkedElement.checked, true, 'Completed: ' + model.todos[0].title + " is completed=true");
     }
     var clearElement = document.getElementById(id);
     if (clearElement) {
@@ -143,9 +143,9 @@ function mock_signal() {
 (0, tape_1.default)('render_main "main" view using (elmish) HTML DOM functions', function (t) {
     var model = {
         todos: [
-            { id: 1, title: "Learn Elm Architecture", done: true },
-            { id: 2, title: "Build Todo List App", done: false },
-            { id: 3, title: "Win the Internet!", done: false }
+            { id: 1, title: "Learn Elm Architecture", completed: true },
+            { id: 2, title: "Build Todo List App", completed: false },
+            { id: 3, title: "Win the Internet!", completed: false }
         ],
         hash: '#/', // the "route" to display
         visibility: 'all' // Add the missing visibility property
@@ -172,9 +172,9 @@ function mock_signal() {
 (0, tape_1.default)('render_footer view using (elmish) HTML DOM functions', function (t) {
     var model = {
         todos: [
-            { id: 1, title: "Learn Elm Architecture", done: true },
-            { id: 2, title: "Build Todo List App", done: false },
-            { id: 3, title: "Win the Internet!", done: false }
+            { id: 1, title: "Learn Elm Architecture", completed: true },
+            { id: 2, title: "Build Todo List App", completed: false },
+            { id: 3, title: "Win the Internet!", completed: false }
         ],
         hash: '#/', // the "route" to display
         visibility: 'all' // Add the missing visibility property
@@ -217,7 +217,7 @@ function mock_signal() {
 (0, tape_1.default)('render_footer 1 item left (pluarisation test)', function (t) {
     var model = {
         todos: [
-            { id: 1, title: "Be excellent to each other!", done: false }
+            { id: 1, title: "Be excellent to each other!", completed: false }
         ],
         hash: '#/', // the "route" to display
         visibility: 'all' // Add the missing visibility property
@@ -271,7 +271,7 @@ function mock_signal() {
     // render the view and append it to the DOM inside the `test-app` node:
     var rootElement = document.getElementById(id);
     if (rootElement) {
-        rootElement.appendChild(app.view({ todos: [] })); // No Todos
+        rootElement.appendChild(app.view({ todos: [], hash: '#/', visibility: 'all' })); // No Todos
     }
     var mainElement = document.getElementById('main');
     if (mainElement) {
@@ -321,7 +321,7 @@ localStorage.removeItem('todos-elmish_store');
         elmish.empty(rootElement);
     }
     // render the view and append it to the DOM inside the `test-app` node:
-    elmish.mount({ todos: [] }, app.update, app.view, id, app.subscriptions);
+    elmish.mount({ todos: [], hash: '#/', visibility: 'all' }, app.update, app.view, id, function (signal) { return app.subscriptions(signal); });
     var new_todo = document.getElementById('new-todo');
     // "type" content in the <input id="new-todo">:
     var todo_text = 'Make Everything Awesome!     '; // deliberate whitespace!
@@ -371,19 +371,19 @@ localStorage.removeItem('todos-elmish_store');
     localStorage.removeItem('todos-elmish_' + id);
     var model = {
         todos: [
-            { id: 0, title: "Learn Elm Architecture", done: true },
-            { id: 1, title: "Build Todo List App", done: false },
-            { id: 2, title: "Win the Internet!", done: false }
+            { id: 0, title: "Learn Elm Architecture", completed: true },
+            { id: 1, title: "Build Todo List App", completed: false },
+            { id: 2, title: "Win the Internet!", completed: false }
         ],
         hash: '#/', // the "route" to display
         visibility: 'all'
     };
     // render the view and append it to the DOM inside the `test-app` node:
-    elmish.mount(model, app.update, app.view, id, app.subscriptions);
-    // confirm that the ONLY the first todo item is done=true:
+    elmish.mount(model, app.update, app.view, id, function (signal) { return app.subscriptions(signal); });
+    // confirm that the ONLY the first todo item is completed=true:
     var items = document.querySelectorAll('.view');
     document.querySelectorAll('.toggle').forEach(function (item, index) {
-        t.equal(item.checked, model.todos[index].done, "Todo #" + index + " is done=" + item.checked
+        t.equal(item.checked, model.todos[index].completed, "Todo #" + index + " is completed=" + item.checked
             + " text: " + items[index].textContent);
     });
     // click the toggle-all checkbox to trigger TOGGLE_ALL: >> true
@@ -392,7 +392,7 @@ localStorage.removeItem('todos-elmish_store');
         toggleAllElement.click(); // click toggle-all checkbox
     }
     document.querySelectorAll('.toggle').forEach(function (item, index) {
-        t.equal(item.checked, true, "TOGGLE each Todo #" + index + " is done=" + item.checked
+        t.equal(item.checked, true, "TOGGLE each Todo #" + index + " is completed=" + item.checked
             + " text: " + items[index].textContent);
     });
     if (toggleAllElement) {
@@ -403,7 +403,7 @@ localStorage.removeItem('todos-elmish_store');
         toggleAllElement.click(); // click toggle-all checkbox
     }
     document.querySelectorAll('.toggle').forEach(function (item, index) {
-        t.equal(item.checked, false, "TOGGLE_ALL Todo #" + index + " is done=" + item.checked
+        t.equal(item.checked, false, "TOGGLE_ALL Todo #" + index + " is completed=" + item.checked
             + " text: " + items[index].textContent);
     });
     if (toggleAllElement) {
@@ -411,11 +411,11 @@ localStorage.removeItem('todos-elmish_store');
     }
     // *manually* "click" each todo item:
     document.querySelectorAll('.toggle').forEach(function (item, index) {
-        item.click(); // this should "toggle" the todo checkbox to done=true
-        t.equal(item.checked, true, ".toggle.click() (each) Todo #" + index + " which is done=" + item.checked
+        item.click(); // this should "toggle" the todo checkbox to completed=true
+        t.equal(item.checked, true, ".toggle.click() (each) Todo #" + index + " which is completed=" + item.checked
             + " text: " + items[index].textContent);
     });
-    // the toggle-all checkbox should be "checked" as all todos are done=true!
+    // the toggle-all checkbox should be "checked" as all todos are completed=true!
     if (toggleAllElement) {
         t.equal(toggleAllElement.checked, true, "complete all checkbox should update state when items are completed");
     }
@@ -434,18 +434,18 @@ localStorage.removeItem('todos-elmish_store');
     localStorage.removeItem('todos-elmish_' + id);
     var model = {
         todos: [
-            { id: 0, title: "Make something people want.", done: false }
+            { id: 0, title: "Make something people want.", completed: false }
         ],
         hash: '#/', // the "route" to display
         visibility: 'all'
     };
     // render the view and append it to the DOM inside the `test-app` node:
-    elmish.mount(model, app.update, app.view, id, app.subscriptions);
+    elmish.mount(model, app.update, app.view, id, function (signal) { return app.subscriptions(signal); });
     var item = document.getElementById('0');
     if (item) {
         t.equal(item.textContent, model.todos[0].title, 'Item contained in model.');
     }
-    // confirm that the todo item is NOT done (done=false):
+    // confirm that the todo item is NOT completed (completed=false):
     var toggleElement = document.querySelectorAll('.toggle')[0];
     if (toggleElement) {
         t.equal(toggleElement.checked, false, 'Item starts out "active" (done=false)');
@@ -466,13 +466,13 @@ localStorage.removeItem('todos-elmish_store');
     localStorage.removeItem('todos-elmish_' + id);
     var model = {
         todos: [
-            { id: 0, title: "Make something people want.", done: false }
+            { id: 0, title: "Make something people want.", completed: false }
         ],
         hash: '#/', // the "route" to display
         visibility: 'all'
     };
     // render the view and append it to the DOM inside the `test-app` node:
-    elmish.mount(model, app.update, app.view, id, app.subscriptions);
+    elmish.mount(model, app.update, app.view, id, function (signal) { return app.subscriptions(signal); });
     // const todo_count = ;
     t.equal(document.querySelectorAll('.destroy').length, 1, "one destroy button");
     var item = document.getElementById('0');
@@ -497,9 +497,9 @@ localStorage.removeItem('todos-elmish_store');
     localStorage.removeItem('todos-elmish_' + id);
     var model = {
         todos: [
-            { id: 0, title: "Make something people want.", done: false },
-            { id: 1, title: "Bootstrap for as long as you can", done: false },
-            { id: 2, title: "Let's solve our own problem", done: false }
+            { id: 0, title: "Make something people want.", completed: false },
+            { id: 1, title: "Bootstrap for as long as you can", completed: false },
+            { id: 2, title: "Let's solve our own problem", completed: false }
         ],
         hash: '#/', // the "route" to display
         editing: 2, // edit the 3rd todo list item (which has id == 2)
@@ -532,13 +532,14 @@ localStorage.removeItem('todos-elmish_store');
     localStorage.removeItem('todos-elmish_' + id);
     var model = {
         todos: [
-            { id: 0, title: "Make something people want.", done: false },
-            { id: 1, title: "Let's solve our own problem", done: false }
+            { id: 0, title: "Make something people want.", completed: false },
+            { id: 1, title: "Let's solve our own problem", completed: false }
         ],
-        hash: '#/' // the "route" to display
+        hash: '#/', // the "route" to display
+        visibility: 'all'
     };
     // render the view and append it to the DOM inside the `test-app` node:
-    elmish.mount(model, app.update, app.view, id, app.subscriptions);
+    elmish.mount(model, app.update, app.view, id, function (signal) { return app.subscriptions(signal); });
     var label = document.querySelectorAll('.view > label')[1];
     if (label) {
         // "double-click" i.e. click the <label> twice in quick succession:
@@ -561,13 +562,14 @@ localStorage.removeItem('todos-elmish_store');
     localStorage.removeItem('todos-elmish_' + id);
     var model = {
         todos: [
-            { id: 0, title: "Make something people want.", done: false },
-            { id: 1, title: "Let's solve our own problem", done: false }
+            { id: 0, title: "Make something people want.", completed: false },
+            { id: 1, title: "Let's solve our own problem", completed: false }
         ],
-        hash: '#/' // the "route" to display
+        hash: '#/', // the "route" to display
+        visibility: 'all'
     };
     // render the view and append it to the DOM inside the `test-app` node:
-    elmish.mount(model, app.update, app.view, id, app.subscriptions);
+    elmish.mount(model, app.update, app.view, id, function (signal) { return app.subscriptions(signal); });
     var label = document.querySelectorAll('.view > label')[1];
     if (label) {
         // "double-click" i.e. click the <label> twice in quick succession:
@@ -619,11 +621,12 @@ localStorage.removeItem('todos-elmish_store');
     localStorage.removeItem('todos-elmish_' + id);
     var model = {
         todos: [
-            { id: 0, title: "Make something people want.", done: false },
-            { id: 1, title: "Let's solve our own problem", done: false }
+            { id: 0, title: "Make something people want.", completed: false },
+            { id: 1, title: "Let's solve our own problem", completed: false }
         ],
         hash: '#/', // the "route" to display
-        editing: 1 // edit the 3rd todo list item (which has id == 2)
+        editing: 1, // edit the 3rd todo list item (which has id == 2)
+        visibility: 'all'
     };
     // render the view and append it to the DOM inside the `test-app` node:
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
@@ -645,11 +648,12 @@ localStorage.removeItem('todos-elmish_store');
     localStorage.removeItem('todos-elmish_' + id);
     var model = {
         todos: [
-            { id: 0, title: "Make something people want.", done: false },
-            { id: 1, title: "Let's solve our own problem", done: false }
+            { id: 0, title: "Make something people want.", completed: false },
+            { id: 1, title: "Let's solve our own problem", completed: false }
         ],
         hash: '#/', // the "route" to display
-        editing: 1 // edit the 3rd todo list item (which has id == 2)
+        editing: 1, // edit the 3rd todo list item (which has id == 2)
+        visibility: 'all'
     };
     // render the view and append it to the DOM inside the `test-app` node:
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
@@ -671,11 +675,12 @@ localStorage.removeItem('todos-elmish_store');
     }
     var model = {
         todos: [
-            { id: 0, title: "Make something people want.", done: false },
-            { id: 1, title: "Bootstrap for as long as you can", done: false },
-            { id: 2, title: "Let's solve our own problem", done: false }
+            { id: 0, title: "Make something people want.", completed: false },
+            { id: 1, title: "Bootstrap for as long as you can", completed: false },
+            { id: 2, title: "Let's solve our own problem", completed: false }
         ],
-        hash: '#/'
+        hash: '#/',
+        visibility: 'all'
     };
     // render the view and append it to the DOM inside the `test-app` node:
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
@@ -697,11 +702,12 @@ localStorage.removeItem('todos-elmish_store');
     }
     var model = {
         todos: [
-            { id: 0, title: "Make something people want.", done: false },
-            { id: 1, title: "Bootstrap for as long as you can", done: true },
-            { id: 2, title: "Let's solve our own problem", done: true }
+            { id: 0, title: "Make something people want.", completed: false },
+            { id: 1, title: "Bootstrap for as long as you can", completed: true },
+            { id: 2, title: "Let's solve our own problem", completed: true }
         ],
-        hash: '#/'
+        hash: '#/',
+        visibility: 'all'
     };
     // render the view and append it to the DOM inside the `test-app` node:
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
@@ -710,7 +716,7 @@ localStorage.removeItem('todos-elmish_store');
     // count completed items
     var completedCountElement = document.getElementById('completed-count');
     var completed_count = completedCountElement ? parseInt(completedCountElement.textContent || '0', 10) : 0;
-    var done_count = model.todos.filter(function (i) { return i.done; }).length;
+    var done_count = model.todos.filter(function (i) { return i.completed; }).length;
     t.equal(completed_count, done_count, "displays completed items count: " + completed_count);
     // clear completed items:
     var button = document.querySelectorAll('.clear-completed')[0];
@@ -733,9 +739,10 @@ localStorage.removeItem('todos-elmish_store');
     }
     var model = {
         todos: [
-            { id: 0, title: "Make something people want.", done: false }
+            { id: 0, title: "Make something people want.", completed: false }
         ],
-        hash: '#/'
+        hash: '#/',
+        visibility: 'all'
     };
     // render the view and append it to the DOM inside the `test-app` node:
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
@@ -757,15 +764,16 @@ localStorage.removeItem('todos-elmish_store');
     }
     var model = {
         todos: [
-            { id: 0, title: "Make something people want.", done: false },
-            { id: 1, title: "Bootstrap for as long as you can", done: true },
-            { id: 2, title: "Let's solve our own problem", done: true }
+            { id: 0, title: "Make something people want.", completed: false },
+            { id: 1, title: "Bootstrap for as long as you can", completed: true },
+            { id: 2, title: "Let's solve our own problem", completed: true }
         ],
-        hash: '#/active' // ONLY ACTIVE items
+        hash: '#/active', // ONLY ACTIVE items
+        visibility: 'active'
     };
     // render the view and append it to the DOM inside the `test-app` node:
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
-    var mod = app.update('ROUTE', model);
+    var mod = app.update({ type: 'SET_VISIBILITY', filter: 'active' }, model);
     // t.equal(mod.hash, '#/', 'default route is #/');
     t.equal(document.querySelectorAll('.view').length, 1, "one active item");
     var selected = document.querySelectorAll('.selected')[0];
@@ -778,6 +786,7 @@ localStorage.removeItem('todos-elmish_store');
     localStorage.removeItem('todos-elmish_' + id);
     // show COMPLTED items:
     model.hash = '#/completed';
+    model.visibility = 'completed';
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
     t.equal(document.querySelectorAll('.view').length, 2, "two completed items");
     selected = document.querySelectorAll('.selected')[0];
@@ -790,6 +799,7 @@ localStorage.removeItem('todos-elmish_store');
     localStorage.removeItem('todos-elmish_' + id);
     // show ALL items:
     model.hash = '#/';
+    model.visibility = 'all';
     elmish.mount(model, app.update, app.view, id, app.subscriptions);
     t.equal(document.querySelectorAll('.view').length, 3, "three items total");
     selected = document.querySelectorAll('.selected')[0];
