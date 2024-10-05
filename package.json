@@ -4,12 +4,15 @@
   "version": "1.0.5",
   "homepage": "https://github.com/dwyl/todomvc-vanilla-javascript-elm-architecture-example",
   "main": "index.html",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/dwyl/todomvc-vanilla-javascript-elm-architecture-example.git"
   },
   "author": "@dwyl & friends!",
   "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.7.4",
     "decache": "^4.6.0",
     "jsdom": "^25.0.0",
     "jsdom-global": "^3.0.2",
@@ -17,15 +20,17 @@
     "nyc": "^17.0.0",
     "pre-commit": "^1.2.2",
     "tap-nyc": "^1.0.3",
-    "tape": "^5.0.1"
+    "tape": "^5.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
   },
   "scripts": {
     "check-coverage": "nyc check-coverage --statements 100 --functions 100 --lines 100 --branches 100",
-    "postinstall": "npm test",
     "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
-    "start": "node lib/server.js",
+    "start": "node --experimental-modules dist/server.js",
     "dev": "live-server",
-    "test": "nyc tape ./test/*.test.js | tap-nyc"
+    "test": "nyc tape ./test/*.test.js | tap-nyc",
+    "build": "tsc -p tsconfig.json && cp lib/todomvc-app.css dist/ && cp lib/todomvc-common-base.css dist/"
   },
   "keywords": [
     "Todo List",

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang=”en-GB” data-framework="javascript">
+<html lang="en-GB" data-framework="javascript">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport"
@@ -11,11 +11,12 @@
 <body>
   <div id="app"></div>
   <!-- CSS Styles are 100% optional. but they make it look *much* nicer -->
-  <link rel="stylesheet" href="lib/todomvc-common-base.css">
-  <link rel="stylesheet" href="lib/todomvc-app.css">
-  <script src="lib/elmish.js"></script>
-  <script src="lib/todo-app.js"></script>
-  <script>
+  <link rel="stylesheet" href="dist/todomvc-common-base.css">
+  <link rel="stylesheet" href="dist/todomvc-app.css">
+  <script type="module" src="dist/elmish.js"></script>
+  <script type="module" src="dist/todo-app.js"></script>
+  <script type="module">
+    import { mount, update, view, subscriptions } from './dist/todo-app.js';
     var model = {
       todos: [
         // { id: 0, title: "Make something people want.", done: false },

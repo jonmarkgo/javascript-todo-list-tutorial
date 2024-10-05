@@ -154,6 +154,29 @@ cd javascript-todo-list-tutorial && npm install
 Now you have _everything_ you need to build a Todo List from scratch!
 
 
+### TypeScript Version
+
+This project has been migrated to TypeScript. To compile and run the TypeScript version of the app, follow these steps:
+
+1. Install dependencies:
+   ```sh
+   npm install
+   ```
+
+2. Build the TypeScript files:
+   ```sh
+   npm run build
+   ```
+
+3. Start the server:
+   ```sh
+   npm start
+   ```
+
+4. Open your browser and navigate to `http://localhost:8000` to use the app.
+
+Note: The original JavaScript files have been removed from the `lib` directory. Only TypeScript (.ts) files are now used for development.
+
 ### `Elm`(_ish_) ?
 
 In order to _simplify_ the code for our Todo List App,
