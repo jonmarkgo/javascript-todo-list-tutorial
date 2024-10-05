@@ -151,6 +151,67 @@ Install the `devDependencies` so you can run the tests:
 cd javascript-todo-list-tutorial && npm install
 ```
 
+## TypeScript Version
+
+This project has been migrated from JavaScript to TypeScript. Here are the instructions to compile and run the TypeScript version of the app:
+
+### Prerequisites
+
+Make sure you have Node.js and npm installed on your machine.
+
+### Installation
+
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/jonmarkgo/javascript-todo-list-tutorial.git
+   cd javascript-todo-list-tutorial
+   ```
+
+2. Install the dependencies:
+   ```sh
+   npm install
+   ```
+
+### Compiling TypeScript
+
+To compile the TypeScript files, run:
+
+```sh
+npm run compile
+```
+
+This will generate JavaScript files in the `dist` directory.
+
+### Running the App
+
+To start the application, run:
+
+```sh
+npm start
+```
+
+This will start the server, and you can access the Todo List app in your browser at `http://localhost:8000`.
+
+### Development
+
+During development, you can use the following command to automatically recompile TypeScript files when changes are made:
+
+```sh
+npm run dev
+```
+
+### Running Tests
+
+To run the tests for the TypeScript app:
+
+```sh
+npm test
+```
+
+This will compile the TypeScript files and run the tests using ts-node.
+
+If you encounter any issues related to the TypeScript migration, please open an issue on the GitHub repository.
+
 Now you have _everything_ you need to build a Todo List from scratch!
 
 
