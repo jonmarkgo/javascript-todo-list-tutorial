@@ -2,12 +2,7 @@
 // https://github.com/dwyl/learn-elm-architecture-in-javascript/blob/master/examples/counter-reset-keyboard/counter.js
 // it is included here purely for testing the "elmish" functions.
 
-/* if require is available, it means we are in Node.js Land i.e. testing!
- in the broweser, the "elmish" DOM functions are loaded in a <script> tag */
-/* istanbul ignore next */
-if (typeof require !== 'undefined' && this.window !== this) {
-  var { button, div, empty, mount, text } = require('../lib/elmish.js');
-}
+import { button, div, empty, mount, text } from '../lib/elmish.js';
 
 function update (action, model) {    // Update function takes the current state
   switch(action) {                   // and an action (String) runs a switch
@@ -43,12 +38,8 @@ function subscriptions (signal) {
   });
 }
 
-/* The code block below ONLY Applies to tests run using Node.js */
-/* istanbul ignore else */
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    subscriptions: subscriptions,
-    view: view,
-    update: update,
-  }
-}
+export {
+  subscriptions,
+  view,
+  update,
+};
