@@ -9,9 +9,9 @@ import { Action } from '../lib/types';
 
 function update (action: Action, model: number): number {    // Update function takes the current state
   switch(action.type) {              // and an action (Action) runs a switch
-    case 'INC': return model + 1;    // add 1 to the model
-    case 'DEC': return model - 1;    // subtract 1 from model
-    case 'RESET': return 0;          // reset state to 0 (Zero) git.io/v9KJk
+    case 'ADD': return model + 1;    // add 1 to the model
+    case 'TOGGLE': return model - 1; // subtract 1 from model
+    case 'CLEAR_COMPLETED': return 0;// reset state to 0 (Zero) git.io/v9KJk
     default: return model;           // if no action, return curent state.
   }                                  // (default action always returns current)
 }
