@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "compilerOptions": {
     "target": "es2020",
@@ -12,3 +13,23 @@
   },
   "include": ["lib/**/*"]
 }
+||||||| merged common ancestors
+=======
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./lib",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "sourceMap": true,
+    "declaration": true,
+    "allowJs": false,
+    "skipLibCheck": true
+  },
+  "include": ["lib/**/*"],
+  "exclude": ["node_modules", "dist", "test/**/*.ts"]
+}
+>>>>>>> origin/devin/typescript-migration-merged-lib-files-001

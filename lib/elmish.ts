@@ -18,6 +18,11 @@ export namespace Elmish {
     }
   } // this function produces a (DOM) "mutation" but has no other "side effects".
 
+  // Type definitions
+  type Model = any; // Replace 'any' with a more specific type if possible
+  type Update<T> = (action: string, model: T, data?: any) => T;
+  type View<T> = (model: T, signal: SignalFunction<T>) => HTMLElement;
+
   /**
    * `mount` mounts the app in the "root" DOM Element.
    * @param {Object} model store of the application's state.
@@ -26,21 +31,21 @@ export namespace Elmish {
    * @param {String} root_element_id root DOM element in which the app is mounted
    * @param {Function} subscriptions any event listeners the application needs
    */
-  export function mount<T>(
+  export function mount<T extends Model>(
     model: T,
-    update: (action: string, model: T, data?: any) => T,
-    view: (model: T, signal: SignalFunction<T>) => HTMLElement,
+    update: Update<T>,
+    view: View<T>,
     root_element_id: string,
     subscriptions?: (signal: SignalFunction<T>) => void
   ): void {
-    const ROOT = document.getElementById(root_element_id); // root DOM element
+    const ROOT = document.getElementById(root_element_id);
     if (!ROOT) throw new Error(`Element with id ${root_element_id} not found`);
-    const store_name = 'todos-elmish_' + root_element_id; // test-app !== app
+    const store_name = 'todos-elmish_' + root_element_id;
 
     function render(mod: T, sig: SignalFunction<T>, root: HTMLElement): void {
       localStorage.setItem(store_name, JSON.stringify(mod)); // save the model!
       empty(root); // clear root element (container) before (re)rendering
-      root.appendChild(view(mod, sig)) // render view based on model & signal
+      root.appendChild(view(mod, sig)); // render view based on model & signal
     }
 
     function signal(action: string, data?: any, model?: T): () => void {
@@ -72,7 +77,7 @@ export namespace Elmish {
   * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
   */
   export function add_attributes(attrlist: AttributeValue[], node: HTMLElement): HTMLElement {
-    console.log('Attributes received:', attrlist); // Add this line to log the attributes
+    console.log('Attributes received:', attrlist);
     if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
       attrlist.forEach(function (attr) {
         if (typeof attr === 'function') {
@@ -231,8 +236,15 @@ export namespace Elmish {
     return create_element('ul', attrlist, childnodes);
   }
 
-  export function route(hash: string): { hash: string } {
-    return { hash: hash };
+  export function on_click(callback: (event: MouseEvent) => void): (this: GlobalEventHandlers, ev: MouseEvent) => any {
+    return function(event: MouseEvent) {
+      event.preventDefault();
+      callback(event);
+    };
+  }
+
+  export function route(): { hash: string } {
+    return { hash: window.location.hash.slice(1) };
   }
 }
 

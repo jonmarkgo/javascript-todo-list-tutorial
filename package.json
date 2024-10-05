@@ -11,8 +11,15 @@
   },
   "author": "@dwyl & friends!",
   "devDependencies": {
+<<<<<<< HEAD
     "@types/express": "^5.0.0",
     "@types/node": "^22.7.4",
+||||||| merged common ancestors
+=======
+    "@types/jsdom-global": "^3.0.7",
+    "@types/node": "^22.7.4",
+    "@types/tape": "^5.6.4",
+>>>>>>> origin/devin/typescript-migration-merged-lib-files-001
     "decache": "^4.6.0",
     "jsdom": "^25.0.0",
     "jsdom-global": "^3.0.2",
@@ -26,11 +33,28 @@
   },
   "scripts": {
     "check-coverage": "nyc check-coverage --statements 100 --functions 100 --lines 100 --branches 100",
+<<<<<<< HEAD
     "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
     "start": "node --experimental-modules dist/server.js",
+||||||| merged common ancestors
+    "postinstall": "npm test",
+    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
+    "start": "node lib/server.js",
+=======
+    "postinstall": "npm run compile && npm test",
+    "retest": "PORT=8000 ts-node node_modules/.bin/nodemon ./test/*.ts",
+    "start": "node dist/server.js",
+>>>>>>> origin/devin/typescript-migration-merged-lib-files-001
     "dev": "live-server",
+<<<<<<< HEAD
     "test": "nyc tape ./test/*.test.js | tap-nyc",
     "build": "tsc -p tsconfig.json && cp lib/todomvc-app.css dist/ && cp lib/todomvc-common-base.css dist/"
+||||||| merged common ancestors
+    "test": "nyc tape ./test/*.test.js | tap-nyc"
+=======
+    "test": "nyc ts-node node_modules/tape/bin/tape ./test/*.test.ts | tap-nyc",
+    "compile": "tsc"
+>>>>>>> origin/devin/typescript-migration-merged-lib-files-001
   },
   "keywords": [
     "Todo List",
