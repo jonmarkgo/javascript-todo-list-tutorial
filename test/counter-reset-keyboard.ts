@@ -2,33 +2,34 @@
 // https://github.com/dwyl/learn-elm-architecture-in-javascript/blob/master/examples/counter-reset-keyboard/counter.js
 // it is included here purely for testing the "elmish" functions.
 
-/* if require is available, it means we are in Node.js Land i.e. testing!
- in the broweser, the "elmish" DOM functions are loaded in a <script> tag */
-/* istanbul ignore next */
-if (typeof require !== 'undefined' && this.window !== this) {
-  var { button, div, empty, mount, text } = require('../lib/elmish.js');
-}
+import { createButton, createDiv, createText } from '../lib/elmish';
 
-type Model = number;
-type Action = 'inc' | 'dec' | 'reset';
+// Model and Action types should be imported from a shared types file
+import { Action } from '../lib/types';
 
-function update (action: Action, model: Model): Model {    // Update function takes the current state
-  switch(action) {                   // and an action (String) runs a switch
-    case 'inc': return model + 1;    // add 1 to the model
-    case 'dec': return model - 1;    // subtract 1 from model
-    case 'reset': return 0;          // reset state to 0 (Zero) git.io/v9KJk
+function update (action: Action, model: number): number {    // Update function takes the current state
+  switch(action.type) {              // and an action (Action) runs a switch
+    case 'INC': return model + 1;    // add 1 to the model
+    case 'DEC': return model - 1;    // subtract 1 from model
+    case 'RESET': return 0;          // reset state to 0 (Zero) git.io/v9KJk
     default: return model;           // if no action, return curent state.
   }                                  // (default action always returns current)
 }
 
-type Signal = (action: Action) => () => void;
+type Signal = (action: Action) => void;
 
-function view (model: Model, signal: Signal): HTMLElement {
-  return div([], [
-    button(["class=inc", "id=inc", signal('inc')], [text('+')]), // increment
-    div(["class=count", "id=count"], [text(model.toString())]), // count
-    button(["class=dec", "id=dec", signal('dec')], [text('-')]), // decrement
-    button(["class=reset", "id=reset", signal('reset')], [text('Reset')])
+function view (model: number, signal: Signal): HTMLElement {
+  const createTextElement = (text: string): HTMLElement => {
+    const span = document.createElement('span');
+    span.textContent = text;
+    return span;
+  };
+
+  return createDiv([], [
+    createButton(["class=inc", "id=inc"], [createTextElement('+')]),
+    createDiv(["class=count", "id=count"], [createTextElement(model.toString())]),
+    createButton(["class=dec", "id=dec"], [createTextElement('-')]),
+    createButton(["class=reset", "id=reset"], [createTextElement('Reset')])
   ]);
 }
 
@@ -39,10 +40,10 @@ function subscriptions (signal: Signal): void {
   document.addEventListener('keyup', function handler (e: KeyboardEvent) {
     switch (e.keyCode) {
       case UP_KEY:
-        signal('inc')(); // invoke the signal > callback function directly
+        signal({ type: 'INC' });
         break;
       case DOWN_KEY:
-        signal('dec')();
+        signal({ type: 'DEC' });
         break;
     }
   });

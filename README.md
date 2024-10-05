@@ -151,6 +151,21 @@ Install the `devDependencies` so you can run the tests:
 cd javascript-todo-list-tutorial && npm install
 ```
 
+Compile the TypeScript files:
+```sh
+npx tsc
+```
+
+Run the test suite:
+```sh
+npm test
+```
+
+Start the application:
+```sh
+npm start
+```
+
 Now you have _everything_ you need to build a Todo List from scratch!
 
 
