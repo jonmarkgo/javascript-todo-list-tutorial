@@ -7,7 +7,7 @@
  * const node = document.getElementById('app');
  * empty(node);
  */
-function empty (node: HTMLElement): void {
+export function emptyNode (node: HTMLElement): void {
   while (node.lastChild) {
     node.removeChild(node.lastChild);
   }
@@ -21,7 +21,7 @@ function empty (node: HTMLElement): void {
  * @param {String} root_element_id root DOM element in which the app is mounted
  * @param {Function} subscriptions any event listeners the application needs
  */
-function mount<T> (
+export function mountApp<T extends { todos?: any[] }> (
   model: T,
   update: (action: string, model: T, data?: any) => T,
   view: (model: T, signal: SignalFunction<T>) => HTMLElement,
@@ -33,21 +33,84 @@ function mount<T> (
   const store_name = 'todos-elmish_' + root_element_id; // test-app !== app
 
   function render (mod: T, sig: SignalFunction<T>, root: HTMLElement): void {
+    console.log('Model state before rendering:', JSON.stringify(mod)); // Debug log
+    console.log('Todos before rendering:', mod.todos); // Additional debug log
+    console.log('Model structure:', Object.keys(mod)); // Detailed model structure log
+    console.log('Todos type:', Array.isArray(mod.todos) ? 'Array' : typeof mod.todos); // Check todos type
+    console.log('Model prototype:', Object.getPrototypeOf(mod)); // Check prototype
+    console.log('Todos property descriptor:', Object.getOwnPropertyDescriptor(mod, 'todos')); // Check property descriptor
+
+    if (!mod.todos || !Array.isArray(mod.todos)) {
+      console.error('Invalid todos structure. Initializing as empty array.');
+      mod.todos = [];
+    }
+
     localStorage.setItem(store_name, JSON.stringify(mod)); // save the model!
-    empty(root); // clear root element (container) before (re)rendering
-    root.appendChild(view(mod, sig)) // render view based on model & signal
+    emptyNode(root); // clear root element (container) before (re)rendering
+
+    console.log('Model right before view:', JSON.stringify(mod)); // New debug log
+    console.log('Todos right before view:', mod.todos); // New debug log
+    console.log('Model type:', typeof mod); // Additional debug log
+
+    console.log('Rendering with todos:', mod.todos.length); // Debug log
+    console.log('Todos content:', JSON.stringify(mod.todos)); // Additional debug log
+
+    // Ensure todos is an array before passing to view
+    const safeModel = { ...mod, todos: Array.isArray(mod.todos) ? mod.todos : [] };
+    const viewElement = view(safeModel, sig);
+    console.log('View element:', viewElement); // New debug log
+    if (viewElement instanceof HTMLElement) {
+      root.appendChild(viewElement); // render view based on model & signal
+    } else {
+      console.error('View function did not return an HTMLElement');
+    }
+
+    console.log('Model state after rendering:', JSON.stringify(safeModel)); // Debug log
+    console.log('Todos after rendering:', safeModel.todos); // Additional debug log
   }
 
   function signal(action: string, data?: any, model?: T): () => void {
     return function callback(): void {
-      model = JSON.parse(localStorage.getItem(store_name) || '{}') as T;
+      console.log('Signal called with action:', action, 'and data:', data); // New debug log
+      const storedModel = localStorage.getItem(store_name);
+      console.log('Stored model:', storedModel); // Debug log
+      model = storedModel ? JSON.parse(storedModel) as T : model;
+      if (!model || typeof model !== 'object') {
+        console.error('Invalid model. Initializing as empty object.');
+        model = {} as T;
+      }
+      if (!Array.isArray(model.todos)) {
+        console.error('Invalid todos. Initializing as empty array.');
+        model.todos = [];
+      }
+      console.log('Retrieved model:', JSON.stringify(model)); // Debug log
+      console.log('Model type before update:', typeof model); // New debug log
+      console.log('Model structure before update:', Object.keys(model)); // New debug log
+      console.log('Action:', action, 'Data:', data); // Additional debug log
       const updatedModel = update(action, model, data); // update model for action
-      render(updatedModel, signal, ROOT);
+      console.log('Updated model:', JSON.stringify(updatedModel)); // Debug log
+      console.log('Model type after update:', typeof updatedModel); // New debug log
+      console.log('Model structure after update:', Object.keys(updatedModel)); // New debug log
+      if (ROOT) {
+        render(updatedModel, signal, ROOT);
+      }
     };
   }
 
-  model = JSON.parse(localStorage.getItem(store_name) || '{}') as T || model;
-  render(model, signal, ROOT);
+  const storedModel = localStorage.getItem(store_name);
+  model = storedModel ? JSON.parse(storedModel) as T : model;
+  if (!model || typeof model !== 'object') {
+    console.error('Invalid initial model. Initializing as empty object.');
+    model = {} as T;
+  }
+  if (!Array.isArray(model.todos)) {
+    console.error('Invalid initial todos. Initializing as empty array.');
+    model.todos = [];
+  }
+  console.log('Initial model state:', JSON.stringify(model)); // Debug log
+  if (ROOT) {
+    render(model, signal, ROOT);
+  }
   if (subscriptions && typeof subscriptions === 'function') {
     subscriptions(signal);
   }
@@ -71,7 +134,12 @@ function add_attributes (attrlist: (string | Function)[], node: HTMLElement): HT
   if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
     attrlist.forEach(function (attr) { // apply all props in array
       // do not attempt to "split" an onclick function as it's not a string!
-      if (typeof attr === 'function') { node.onclick = attr; return node; }
+      if (typeof attr === 'function') {
+        node.onclick = (ev: MouseEvent) => {
+          return attr.call(node, ev);
+        };
+        return node;
+      }
       // apply any attributes that are *not* functions (i.e. Strings):
       const a = (attr as string).split('=');
       switch(a[0]) {
@@ -171,11 +239,11 @@ function a (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLEle
   return create_element('a', attrlist, childnodes);
 }
 
-function button (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+function createButton (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('button', attrlist, childnodes);
 }
 
-function div (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
+function createDiv (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('div', attrlist, childnodes);
 }
 
@@ -240,26 +308,24 @@ function route<T extends { hash?: string }> (model: T, title: string, hash: stri
 
 /* module.exports is needed to run the functions using Node.js for testing! */
 /* istanbul ignore next */
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    add_attributes,
-    append_childnodes,
-    a,
-    button,
-    div,
-    empty,
-    footer,
-    input,
-    h1,
-    header,
-    label,
-    li,
-    mount,
-    route,
-    section,
-    span,
-    strong,
-    text,
-    ul
-  }
-}
+export {
+  add_attributes,
+  append_childnodes,
+  a,
+  createButton as button,
+  createDiv as div,
+  emptyNode as empty,
+  footer,
+  input,
+  h1,
+  header,
+  label,
+  li,
+  mountApp as mount,
+  route,
+  section,
+  span,
+  strong,
+  text,
+  ul
+};

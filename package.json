@@ -2,6 +2,7 @@
   "name": "javascript-todo-list-tutorial",
   "description": "Learn how to build a Todo List in JavaScript following Test Driven Development TDD!",
   "version": "1.0.5",
+  "type": "module",
   "homepage": "https://github.com/dwyl/todomvc-vanilla-javascript-elm-architecture-example",
   "main": "index.html",
   "repository": {
@@ -10,6 +11,10 @@
   },
   "author": "@dwyl & friends!",
   "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/jsdom-global": "^3.0.7",
+    "@types/node": "^22.7.4",
+    "@types/tape": "^5.6.4",
     "decache": "^4.6.0",
     "jsdom": "^24.0.0",
     "jsdom-global": "^3.0.2",
@@ -17,15 +22,22 @@
     "nyc": "^15.1.0",
     "pre-commit": "^1.2.2",
     "tap-nyc": "^1.0.3",
-    "tape": "^5.0.1"
+    "tape": "^5.0.1",
+    "typescript": "^5.6.2"
   },
   "scripts": {
     "check-coverage": "nyc check-coverage --statements 100 --functions 100 --lines 100 --branches 100",
     "postinstall": "npm test",
-    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
-    "start": "node lib/server.js",
+    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.ts",
+    "start": "node dist/lib/server.js",
     "dev": "live-server",
-    "test": "nyc tape ./test/*.test.js | tap-nyc"
+    "pretest": "npm run compile",
+    "test": "nyc tape ./dist/test/*.test.js | tap-nyc",
+    "compile": "tsc && npm run copy-static-assets",
+    "copy-static-assets": "npm run copy-html && npm run copy-favicon && npm run copy-css",
+    "copy-html": "cp index.html dist/",
+    "copy-favicon": "cp lib/favicon.ico dist/lib/",
+    "copy-css": "cp lib/*.css dist/lib/"
   },
   "keywords": [
     "Todo List",

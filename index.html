@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang=”en-GB” data-framework="javascript">
+<html lang="en-GB" data-framework="javascript">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport"
@@ -13,19 +13,55 @@
   <!-- CSS Styles are 100% optional. but they make it look *much* nicer -->
   <link rel="stylesheet" href="lib/todomvc-common-base.css">
   <link rel="stylesheet" href="lib/todomvc-app.css">
-  <script src="lib/elmish.js"></script>
-  <script src="lib/todo-app.js"></script>
-  <script>
-    var model = {
+  <script type="module">
+    import { mountApp } from './lib/elmish.js';
+    import { update, view, subscriptions } from './lib/todo-app.js';
+
+    const initialModel = {
       todos: [
-        // { id: 0, title: "Make something people want.", done: false },
-        // { id: 1, title: "Bootstrap for as long as you can", done: false },
-        // { id: 2, title: "Let's solve our own problem", done: false }
+        { id: 0, title: "Make something people want.", done: false },
+        { id: 1, title: "Bootstrap for as long as you can", done: false },
+        { id: 2, title: "Let's solve our own problem", done: false }
       ],
       hash: '#/', // the "route" to display
       // editing: 2 // edit the 3rd todo list item (which has id == 2)
     };
-    mount(model, update, view, 'app', subscriptions);
+    console.log('Initial model:', initialModel);
+    const model = JSON.parse(JSON.stringify(initialModel)); // Create a deep copy
+    console.log('Model before mountApp:', model);
+
+    // Add a function to periodically log the model state
+    function logModelState() {
+      console.log('Current model state:', JSON.parse(JSON.stringify(model)));
+      setTimeout(logModelState, 1000); // Log every second
+    }
+
+    // Wrap mountApp in a try-catch block to catch any errors
+    try {
+      mountApp(model, update, view, 'app', subscriptions);
+      console.log('Model immediately after mountApp:', model);
+    } catch (error) {
+      console.error('Error in mountApp:', error);
+    }
+
+    // Start logging the model state
+    logModelState();
+
+    // Add an event listener to log any changes to localStorage
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'todos-elmish_app') {
+        console.log('localStorage updated:', JSON.parse(event.newValue));
+      }
+    });
+
+    // Log any changes to the model object
+    const modelProxy = new Proxy(model, {
+      set: function(target, property, value) {
+        console.log(`Property '${property}' changed. New value:`, value);
+        target[property] = value;
+        return true;
+      }
+    });
   </script>
 
   <!-- Below this point is all related to the Tests for the App -->
