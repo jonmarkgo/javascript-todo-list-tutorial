@@ -1,10 +1,17 @@
-const test = require('tape');       // https://github.com/dwyl/learn-tape
-const fs = require('fs');           // read html files (see below)
-const path = require('path');       // so we can open files cross-platform
-const elmish = require('../lib/elmish.js');
+import test from 'tape';
+import fs from 'fs';
+import path from 'path';
+import * as elmish from '../lib/elmish.js';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const html = fs.readFileSync(path.resolve(__dirname, '../index.html'));
-require('jsdom-global')(html);   // https://github.com/rstacruz/jsdom-global
-const jsdom = require("jsdom");
+import jsdomGlobal from 'jsdom-global';
+jsdomGlobal(html);
+import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 const id = 'test-app';              // all tests use separate root element
 
