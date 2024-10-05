@@ -13,36 +13,39 @@ function empty (node: HTMLElement): void {
   }
 } // this function produces a (DOM) "mutation" but has no other "side effects".
 
+// Type definitions
+type Model = any; // Replace 'any' with a more specific type if possible
+type Update<T> = (action: string, model: T, data?: any) => T;
+type View<T> = (model: T, signal: SignalFunction<T>) => HTMLElement;
+type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
+
 /**
  * `mount` mounts the app in the "root" DOM Element.
- * @param {Object} model store of the application's state.
- * @param {Function} update how the application state is updated ("controller")
- * @param {Function} view function that renders HTML/DOM elements with model.
- * @param {String} root_element_id root DOM element in which the app is mounted
- * @param {Function} subscriptions any event listeners the application needs
  */
-function mount<T> (
+function mount<T extends Model>(
   model: T,
-  update: (action: string, model: T, data?: any) => T,
-  view: (model: T, signal: SignalFunction<T>) => HTMLElement,
+  update: Update<T>,
+  view: View<T>,
   root_element_id: string,
   subscriptions?: (signal: SignalFunction<T>) => void
 ): void {
-  const ROOT = document.getElementById(root_element_id); // root DOM element
+  const ROOT = document.getElementById(root_element_id);
   if (!ROOT) throw new Error(`Element with id ${root_element_id} not found`);
-  const store_name = 'todos-elmish_' + root_element_id; // test-app !== app
+  const store_name = 'todos-elmish_' + root_element_id;
 
-  function render (mod: T, sig: SignalFunction<T>, root: HTMLElement): void {
-    localStorage.setItem(store_name, JSON.stringify(mod)); // save the model!
-    empty(root); // clear root element (container) before (re)rendering
-    root.appendChild(view(mod, sig)) // render view based on model & signal
+  function render(mod: T, sig: SignalFunction<T>, root: HTMLElement): void {
+    localStorage.setItem(store_name, JSON.stringify(mod));
+    empty(root);
+    root.appendChild(view(mod, sig));
   }
 
   function signal(action: string, data?: any, model?: T): () => void {
     return function callback(): void {
       model = JSON.parse(localStorage.getItem(store_name) || '{}') as T;
-      const updatedModel = update(action, model, data); // update model for action
-      render(updatedModel, signal, ROOT);
+      const updatedModel = update(action, model, data);
+      if (ROOT) { // Add null check for ROOT
+        render(updatedModel, signal, ROOT);
+      }
     };
   }
 
@@ -52,8 +55,6 @@ function mount<T> (
     subscriptions(signal);
   }
 }
-
-type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 
 /**
 * `add_attributes` applies the desired attribute(s) to the specified DOM node.
@@ -66,60 +67,21 @@ type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 * // returns node with attributes applied
 * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
 */
-function add_attributes (attrlist: (string | Function)[], node: HTMLElement): HTMLElement {
-  // console.log(attrlist, node);
-  if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
-    attrlist.forEach(function (attr) { // apply all props in array
-      // do not attempt to "split" an onclick function as it's not a string!
-      if (typeof attr === 'function') { node.onclick = attr; return node; }
-      // apply any attributes that are *not* functions (i.e. Strings):
-      const a = (attr as string).split('=');
-      switch(a[0]) {
-        case 'autofocus':
-          node.setAttribute('autofocus', 'autofocus');
-          node.focus();
-          setTimeout(function() { // wait till DOM has rendered then focus()
-            node.focus();
-          }, 200)
-          break;
-        case 'checked':
-          node.setAttribute('checked', 'true');
-          break;
-        case 'class':
-          node.className = a[1]; // apply one or more CSS classes
-          break;
-        case 'data-id':
-          node.setAttribute('data-id', a[1]); // add data-id e.g: to <li>
-          break;
-        case 'for':
-          node.setAttribute('for', a[1]); // e.g: <label for="toggle-all">
-          break;
-        case 'href':
-          (node as HTMLAnchorElement).href = a[1]; // e.g: <a href="#/active">Active</a>
-          break;
-        case 'id':
-          node.id = a[1]; // apply element id e.g: <input id="toggle-all">
-          break;
-        case 'placeholder':
-          (node as HTMLInputElement).placeholder = a[1]; // add placeholder to <input> element
-          break;
-        case 'style':
-          node.setAttribute("style", a[1]); // <div style="display: block;">
-          break;
-        case 'type':
-          node.setAttribute('type', a[1]); // <input id="go" type="checkbox">
-          break;
-        case 'value':
-          console.log('value:', a[1]);
-          (node as HTMLInputElement).value = a[1];
-          break;
-        default:
-          break;
-      } // end switch
-    });
-  }
+function add_attributes(attrlist: (string | Function)[], node: HTMLElement): HTMLElement {
+  attrlist.forEach(function (attr) {
+    if (typeof attr === 'string' && attr.indexOf('=') > -1) {
+      const [key, value] = attr.split('=');
+      node.setAttribute(key, value);
+    }
+    // Fix the type for the onclick event
+    if (typeof attr === 'function') {
+      node.addEventListener('click', attr as EventListener);
+    }
+  });
   return node;
 }
+
+// Rest of the file remains unchanged
 
 /**
  * `append_childnodes` appends an array of HTML elements to a parent DOM node.
@@ -213,8 +175,10 @@ function strong (text_str: string): HTMLElement {
   return el;
 }
 
-function text (text: string): Text {
-  return document.createTextNode(text);
+function text (text: string): HTMLElement {
+  const span = document.createElement('span');
+  span.textContent = text;
+  return span;
 }
 
 function ul (attrlist: (string | Function)[], childnodes: HTMLElement[]): HTMLElement {
@@ -263,3 +227,25 @@ if (typeof module !== 'undefined' && module.exports) {
     ul
   }
 }
+
+export {
+  add_attributes,
+  append_childnodes,
+  a,
+  button,
+  div,
+  empty,
+  footer,
+  input,
+  h1,
+  header,
+  label,
+  li,
+  mount,
+  route,
+  section,
+  span,
+  strong,
+  text,
+  ul
+};
