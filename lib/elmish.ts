@@ -19,9 +19,9 @@ export namespace Elmish {
   } // this function produces a (DOM) "mutation" but has no other "side effects".
 
   // Type definitions
-  type Model = any; // Replace 'any' with a more specific type if possible
-  type Update<T> = (action: string, model: T, data?: any) => T;
-  type View<T> = (model: T, signal: SignalFunction<T>) => HTMLElement;
+  export type Model = any; // Replace 'any' with a more specific type if possible
+  export type Update<T> = (action: string, model: T, data?: any) => T;
+  export type View<T> = (model: T, signal: SignalFunction<T>) => HTMLElement;
 
   /**
    * `mount` mounts the app in the "root" DOM Element.
@@ -236,15 +236,15 @@ export namespace Elmish {
     return create_element('ul', attrlist, childnodes);
   }
 
-  export function on_click(callback: (event: MouseEvent) => void): (this: GlobalEventHandlers, ev: MouseEvent) => any {
-    return function(event: MouseEvent) {
-      event.preventDefault();
-      callback(event);
+  export function on_click(handler: (ev: MouseEvent) => void): AttributeValue {
+    return function(this: GlobalEventHandlers, ev: MouseEvent) {
+      ev.preventDefault();
+      handler(ev);
     };
   }
 
-  export function route(): { hash: string } {
-    return { hash: window.location.hash.slice(1) };
+  export function route(path: string): boolean {
+    return window.location.hash.slice(1) === path;
   }
 }
 

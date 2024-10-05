@@ -1,9 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.update = update;
-exports.view = view;
-exports.subscriptions = subscriptions;
-const elmish_1 = require("./elmish");
+import { text } from './elmish';
 function update(msg, model, data) {
     // Simplified update function
     return model;
@@ -11,10 +6,11 @@ function update(msg, model, data) {
 function view(model) {
     // Simplified view function
     const div = document.createElement('div');
-    div.appendChild((0, elmish_1.text)('Todo App'));
+    div.appendChild(text('Todo App'));
     return div;
 }
 function subscriptions(model) {
     // Simplified subscriptions function
 }
+export { update, view, subscriptions };
 //# sourceMappingURL=todo-app-test.js.map

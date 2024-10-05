@@ -1,17 +1,26 @@
-interface Todo {
+export interface Todo {
     id: number;
     title: string;
-    completed: boolean;
+    done: boolean;
 }
-interface Model {
+export interface Model {
     todos: Todo[];
     hash: string;
-    all_done?: boolean;
     clicked?: number;
     click_time?: number;
-    editing?: number | false;
+    editing?: number;
+    all_done?: boolean;
 }
-declare function update(action: string, model: Model, data?: any): Model;
+export declare function mount(model: Model, update: (action: string, model: Model, data?: any) => Model, view: (model: Model, signal: (action: string, data?: any) => void) => HTMLElement, id: string, subscriptions: (signal: (action: string, data?: any) => void) => void): void;
+declare const initial_model: Model;
+/**
+ * `update` transforms the `model` based on the `action`.
+ * @param {String} action - the desired action to perform on the model.
+ * @param {Model} model - the App's (current) model (or "state").
+ * @param {any} data - the data we want to "apply" to the item.
+ * @return {Model} new_model - the transformed model.
+ */
+export declare function update(action: string, model: Model, data?: any): Model;
 declare function view(model: Model): HTMLElement;
-declare function subscriptions(model: Model): void;
-export { update, view, subscriptions };
+export declare function subscriptions(signal: (action: string, data?: any) => void): void;
+export { initial_model, update, view, subscriptions };
