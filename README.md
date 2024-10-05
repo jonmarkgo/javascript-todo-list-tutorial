@@ -166,6 +166,11 @@ Start the application:
 npm start
 ```
 
+Start the application:
+```sh
+npm start
+```
+
 Now you have _everything_ you need to build a Todo List from scratch!
 
 

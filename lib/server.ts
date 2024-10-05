@@ -1,43 +1,45 @@
-// Zero Dependencies Node.js HTTP Server for running static on localhost
-import * as http from 'http';
-import * as fs from 'fs';
-import * as path from 'path';
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+// Zero Dependencies Node.js HTTP Server for running static on localhost
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 console.log('cwd', __dirname);
 
-const index: string = fs.readFileSync(path.resolve(__dirname + '/../index.html'), 'utf8');
-const favicon: Buffer = fs.readFileSync(__dirname + '/favicon.ico');
-const app: string = fs.readFileSync(__dirname + '/todo-app.js', 'utf8');
-const elmish: string = fs.readFileSync(__dirname + '/elmish.js', 'utf8');
-const appcss: string = fs.readFileSync(__dirname + '/todomvc-app.css', 'utf8');
-const basecss: string = fs.readFileSync(__dirname + '/todomvc-common-base.css', 'utf8');
+const index = fs.readFileSync(path.resolve(__dirname, '..', '..', 'index.html'), 'utf8');
+const favicon = fs.readFileSync(path.resolve(__dirname, '..', '..', 'lib', 'favicon.ico'));
+const app = fs.readFileSync(path.resolve(__dirname, '..', 'lib', 'todo-app.js'), 'utf8');
+const elmish = fs.readFileSync(path.resolve(__dirname, '..', 'lib', 'elmish.js'), 'utf8');
+const appcss = fs.readFileSync(path.resolve(__dirname, '..', '..', 'lib', 'todomvc-app.css'), 'utf8');
+const basecss = fs.readFileSync(path.resolve(__dirname, '..', '..', 'lib', 'todomvc-common-base.css'), 'utf8');
 
-http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
-  console.log("URL:", req.url);
-  if (req.url && req.url.indexOf('favicon') > -1) {
-    res.writeHead(200, {'Content-Type': 'image/x-icon'});
-    res.end(favicon);
-  }
-  if (req.url && req.url.indexOf('.js') > -1) {
-    res.writeHead(200, {'Content-Type': 'application/javascript'});
-    if (req.url.indexOf('elmish') > -1) {
-      res.end(elmish);
+const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+    console.log("URL:", req.url);
+    if (req.url && req.url.indexOf('favicon') > -1) {
+        res.writeHead(200, { 'Content-Type': 'image/x-icon' });
+        res.end(favicon);
+    } else if (req.url && req.url.indexOf('.js') > -1) {
+        res.writeHead(200, { 'Content-Type': 'application/javascript' });
+        if (req.url.indexOf('elmish') > -1) {
+            res.end(elmish);
+        } else {
+            res.end(app);
+        }
+    } else if (req.url && req.url.indexOf('.css') > -1) {
+        res.writeHead(200, { 'Content-Type': 'text/css' });
+        if (req.url.indexOf('base') > -1) {
+            res.end(basecss);
+        } else {
+            res.end(appcss);
+        }
+    } else {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(index);
     }
-    else {
-      res.end(app);
-    }
-  }
-  if (req.url && req.url.indexOf('.css') > -1) {
-    res.writeHead(200, {'Content-Type': 'text/css'});
-    if (req.url.indexOf('base') > -1) {
-      res.end(basecss);
-    }
-    else {
-      res.end(appcss);
-    }
-  }
-  else {
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    res.end(index);
-  }
-}).listen(process.env.PORT || 8000);
+});
+
+server.listen(process.env.PORT || 8000);
+
+export default server;
