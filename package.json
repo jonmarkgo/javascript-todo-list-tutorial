@@ -11,16 +11,18 @@
   },
   "author": "@dwyl & friends!",
   "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/jsdom-global": "^3.0.7",
     "@types/node": "^22.7.4",
     "@types/tape": "^5.6.4",
     "decache": "^4.6.0",
     "jsdom": "^25.0.0",
     "jsdom-global": "^3.0.2",
     "live-server": "^1.1.0",
-    "nyc": "^17.0.0",
+    "nyc": "^17.1.0",
     "pre-commit": "^1.2.2",
     "tap-nyc": "^1.0.3",
-    "tape": "^5.0.1",
+    "tape": "^5.9.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
   },
@@ -30,7 +32,8 @@
     "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
     "start": "node dist/lib/server.js",
     "dev": "live-server",
-    "test": "nyc tape ./test/*.test.js | tap-nyc"
+    "build": "tsc",
+    "test": "npm run build && node --loader ts-node/esm --experimental-specifier-resolution=node ./test/elmish.test.ts && node --loader ts-node/esm --experimental-specifier-resolution=node ./test/todo-app.test.ts"
   },
   "keywords": [
     "Todo List",
@@ -48,5 +51,8 @@
   "pre-commit": [
     "test",
     "check-coverage"
-  ]
+  ],
+  "dependencies": {
+    "esm": "^3.2.25"
+  }
 }
