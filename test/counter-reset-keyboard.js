@@ -2,7 +2,7 @@
 // https://github.com/dwyl/learn-elm-architecture-in-javascript/blob/master/examples/counter-reset-keyboard/counter.js
 // it is included here purely for testing the "elmish" functions.
 
-import { button, div, empty, mount, text } from '../lib/elmish.js';
+import { button, div, empty, mount, text } from '../lib/elmish.ts';
 
 function update (action, model) {    // Update function takes the current state
   switch(action) {                   // and an action (String) runs a switch
