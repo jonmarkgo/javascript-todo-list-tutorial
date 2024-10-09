@@ -4,7 +4,7 @@
 
 import { button, div, empty, mount, text } from '../lib/elmish.js';
 
-function update (action, model) {    // Update function takes the current state
+function update (action: string, model: number): number {    // Update function takes the current state
   switch(action) {                   // and an action (String) runs a switch
     case 'inc': return model + 1;    // add 1 to the model
     case 'dec': return model - 1;    // subtract 1 from model
@@ -13,20 +13,20 @@ function update (action, model) {    // Update function takes the current state
   }                                  // (default action always returns current)
 }
 
-function view (model, signal) {
+function view (model: number, signal: (action: string) => () => void): HTMLElement {
   return div([], [
-    button(["class=inc", "id=inc", signal('inc')], [text('+')]), // increment
-    div(["class=count", "id=count"], [text(model.toString())]), // count
-    button(["class=dec", "id=dec", signal('dec')], [text('-')]), // decrement
-    button(["class=reset", "id=reset", signal('reset')], [text('Reset')])
+    button(["class=inc", "id=inc", signal('inc')], [text('+') as unknown as HTMLElement]), // increment
+    div(["class=count", "id=count"], [text(model.toString()) as unknown as HTMLElement]), // count
+    button(["class=dec", "id=dec", signal('dec')], [text('-') as unknown as HTMLElement]), // decrement
+    button(["class=reset", "id=reset", signal('reset')], [text('Reset') as unknown as HTMLElement])
   ]);
 }
 
-function subscriptions (signal) {
-  var UP_KEY = 38; // increment the counter when [↑] (up) key is pressed
-  var DOWN_KEY = 40; // decrement the counter when [↓] (down) key is pressed
+function subscriptions (signal: (action: string) => () => void): void {
+  const UP_KEY = 38; // increment the counter when [↑] (up) key is pressed
+  const DOWN_KEY = 40; // decrement the counter when [↓] (down) key is pressed
 
-  document.addEventListener('keyup', function handler (e) {
+  document.addEventListener('keyup', function handler (e: KeyboardEvent) {
     switch (e.keyCode) {
       case UP_KEY:
         signal('inc')(); // invoke the signal > callback function directly
