@@ -1,4 +1,5 @@
 import { JSDOM } from 'jsdom';
+import jsdomGlobal from 'jsdom-global';
 
 const dom = new JSDOM('<!DOCTYPE html><html><body><div id="app"></div></body></html>', {
   url: 'http://localhost',
@@ -32,3 +33,7 @@ console.log('App element innerHTML:', document.getElementById('app')?.innerHTML)
 // Add any other global variables that your tests might need
 
 console.log('Setup complete');
+
+jsdomGlobal();
+
+export {};

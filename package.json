@@ -4,6 +4,7 @@
   "version": "1.0.5",
   "homepage": "https://github.com/dwyl/todomvc-vanilla-javascript-elm-architecture-example",
   "main": "index.html",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/dwyl/todomvc-vanilla-javascript-elm-architecture-example.git"
@@ -11,6 +12,7 @@
   "author": "@dwyl & friends!",
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
+    "@types/jsdom-global": "^3.0.7",
     "@types/node": "^22.7.5",
     "@types/tape": "^5.6.4",
     "decache": "^4.6.0",
@@ -30,7 +32,7 @@
     "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
     "start": "node dist/lib/server.js",
     "dev": "live-server",
-    "test": "nyc ts-node-esm --experimental-specifier-resolution=node -r ./test/setup.ts -r jsdom-global/register node_modules/tape/bin/tape ./lib/**/*.ts ./test/**/*.{js,ts} | tap-nyc"
+    "test": "NODE_OPTIONS='--experimental-vm-modules --experimental-specifier-resolution=node' nyc ts-node --esm ./test/setup.ts && ts-node --esm node_modules/tape/bin/tape ./lib/**/*.ts ./test/**/*.{js,ts} | tap-nyc"
   },
   "keywords": [
     "Todo List",
