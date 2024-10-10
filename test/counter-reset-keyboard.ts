@@ -6,13 +6,13 @@
  in the broweser, the "elmish" DOM functions are loaded in a <script> tag */
 /* istanbul ignore next */
 if (typeof require !== 'undefined' && this.window !== this) {
-  var { button, div, empty, mount, text } = require('../lib/elmish.js');
+  var elmish = require('../lib/elmish.js');
 }
 
-type Model = number;
-type Action = 'inc' | 'dec' | 'reset';
+type CounterModel = number;
+type CounterAction = 'inc' | 'dec' | 'reset';
 
-function update (action: Action, model: Model): Model {    // Update function takes the current state
+function counterUpdate (action: CounterAction, model: CounterModel): CounterModel {    // Update function takes the current state
   switch(action) {                   // and an action (String) runs a switch
     case 'inc': return model + 1;    // add 1 to the model
     case 'dec': return model - 1;    // subtract 1 from model
@@ -21,18 +21,18 @@ function update (action: Action, model: Model): Model {    // Update function ta
   }                                  // (default action always returns current)
 }
 
-type Signal = (action: Action) => () => void;
+type CounterSignal = (action: CounterAction) => () => void;
 
-function view (model: Model, signal: Signal): HTMLElement {
-  return div([], [
-    button(["class=inc", "id=inc", signal('inc')], [text('+')]), // increment
-    div(["class=count", "id=count"], [text(model.toString())]), // count
-    button(["class=dec", "id=dec", signal('dec')], [text('-')]), // decrement
-    button(["class=reset", "id=reset", signal('reset')], [text('Reset')])
+function counterView (model: CounterModel, signal: CounterSignal): HTMLElement {
+  return elmish.div([], [
+    elmish.button(["class=inc", "id=inc", signal('inc')], [elmish.text('+')]), // increment
+    elmish.div(["class=count", "id=count"], [elmish.text(model.toString())]), // count
+    elmish.button(["class=dec", "id=dec", signal('dec')], [elmish.text('-')]), // decrement
+    elmish.button(["class=reset", "id=reset", signal('reset')], [elmish.text('Reset')])
   ]);
 }
 
-function subscriptions (signal: Signal): void {
+function counterSubscriptions (signal: CounterSignal): void {
   const UP_KEY = 38; // increment the counter when [↑] (up) key is pressed
   const DOWN_KEY = 40; // decrement the counter when [↓] (down) key is pressed
 
@@ -52,8 +52,8 @@ function subscriptions (signal: Signal): void {
 /* istanbul ignore else */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    subscriptions: subscriptions,
-    view: view,
-    update: update,
+    subscriptions: counterSubscriptions,
+    view: counterView,
+    update: counterUpdate,
   }
 }
