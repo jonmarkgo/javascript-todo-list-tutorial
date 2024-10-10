@@ -20,10 +20,10 @@ type Signal = (action: Action) => () => void;
 
 function view (model: Model, signal: Signal): HTMLElement {
   return div([], [
-    button(["class=inc", "id=inc", signal('inc')], [text('+')]), // increment
-    div(["class=count", "id=count"], [text(model.toString())]), // count
-    button(["class=dec", "id=dec", signal('dec')], [text('-')]), // decrement
-    button(["class=reset", "id=reset", signal('reset')], [text('Reset')])
+    button(["class=inc", "id=inc", "onclick=" + signal('inc').toString()], [text('+') as unknown as HTMLElement]), // increment
+    div(["class=count", "id=count"], [text(model.toString()) as unknown as HTMLElement]), // count
+    button(["class=dec", "id=dec", "onclick=" + signal('dec').toString()], [text('-') as unknown as HTMLElement]), // decrement
+    button(["class=reset", "id=reset", "onclick=" + signal('reset').toString()], [text('Reset') as unknown as HTMLElement])
   ]);
 }
 

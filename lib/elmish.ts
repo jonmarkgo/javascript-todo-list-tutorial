@@ -1,3 +1,24 @@
+export interface Model {
+  counters: number[];
+}
+
+export type Action = 'inc' | 'dec' | 'reset';
+
+export function update(model: Model, action?: Action): Model {
+  // Implementation details to be added later
+  return model;
+}
+
+export function view(model: Model): HTMLElement {
+  // Implementation details to be added later
+  return document.createElement('div');
+}
+
+/**
+ * `empty` the contents of a given DOM element "node" (before re-rendering).
+
+export type Action = 'inc' | 'dec' | 'reset';
+
 /**
  * `empty` the contents of a given DOM element "node" (before re-rendering).
  * This is the *fastest* way according to: stackoverflow.com/a/3955238/1148249
@@ -70,62 +91,50 @@ type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 * // returns node with attributes applied
 * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
 */
-function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
-  // console.log(attrlist, node);
-  if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
-    attrlist.forEach(function (attr) { // apply all props in array
-      // do not attempt to "split" an onclick function as it's not a string!
-      if (typeof attr === 'function') {
-        node.onclick = attr;
-        return node;
-      }
-      // apply any attributes that are *not* functions (i.e. Strings):
-      const a = (attr as string).split('=');
-      switch(a[0]) {
-        case 'autofocus':
-          node.setAttribute('autofocus', 'autofocus');
-          node.focus();
-          setTimeout(function() { // wait till DOM has rendered then focus()
-            node.focus();
-          }, 200)
-          break;
-        case 'checked':
-          node.setAttribute('checked', 'true');
-          break;
-        case 'class':
-          node.className = a[1]; // apply one or more CSS classes
-          break;
-        case 'data-id':
-          node.setAttribute('data-id', a[1]); // add data-id e.g: to <li>
-          break;
-        case 'for':
-          node.setAttribute('for', a[1]); // e.g: <label for="toggle-all">
-          break;
-        case 'href':
-          (node as HTMLAnchorElement).href = a[1]; // e.g: <a href="#/active">Active</a>
-          break;
-        case 'id':
-          node.id = a[1]; // apply element id e.g: <input id="toggle-all">
-          break;
-        case 'placeholder':
-          (node as HTMLInputElement).placeholder = a[1]; // add placeholder to <input> element
-          break;
-        case 'style':
-          node.setAttribute("style", a[1]); // <div style="display: block;">
-          break;
-        case 'type':
-          node.setAttribute('type', a[1]); // <input id="go" type="checkbox">
-          break;
-        case 'value':
-          console.log('value:', a[1]);
-          (node as HTMLInputElement).value = a[1];
-          break;
-        default:
-          break;
-      } // end switch
-    });
-  }
-  return node;
+export function add_attributes (attrlist: string[], el: HTMLElement): HTMLElement {
+  attrlist.forEach(function (attr) {
+    const a = attr.split('=');
+    switch (a[0]) {
+      case 'autofocus':
+        el.setAttribute(a[0], a[0]);
+        setTimeout(function () { // this should "just work" in JS ... ¯\_(ツ)_/¯
+          el.focus();
+        }, 200);
+        break;
+      case 'class':
+        el.className = a[1];
+        break;
+      case 'data-id':
+        el.setAttribute('data-id', a[1]);
+        break;
+      case 'for':
+        el.setAttribute('for', a[1]);
+        break;
+      case 'href':
+        el.setAttribute('href', a[1]);
+        break;
+      case 'id':
+        el.id = a[1];
+        break;
+      case 'placeholder':
+        el.setAttribute('placeholder', a[1]);
+        break;
+      case 'style':
+        el.setAttribute('style', a[1]);
+        break;
+      case 'type':
+        el.setAttribute('type', a[1]);
+        break;
+      case 'checked':
+        if (a[1] === 'true') {
+          (el as HTMLInputElement).checked = true;
+        }
+        break;
+      default:
+        break;
+    }
+  });
+  return el;
 }
 
 /**
@@ -155,57 +164,57 @@ function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTM
  * // returns the parent node with the "children" appended
  * var div = elmish.create_element('div', ["class=todoapp"], [h1, input]);
  */
-function create_element (type: string, attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+function create_element (type: string, attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return append_childnodes(childnodes,
     add_attributes(attrlist, document.createElement(type))
   );
 }
 
-export function section (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function section (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('section', attrlist, childnodes);
 }
 
-export function a (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function a (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('a', attrlist, childnodes);
 }
 
-export function button (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function button (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('button', attrlist, childnodes);
 }
 
-export function div (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function div (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('div', attrlist, childnodes);
 }
 
-export function footer (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function footer (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('footer', attrlist, childnodes);
 }
 
-export function header (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function header (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('header', attrlist, childnodes);
 }
 
-export function h1 (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function h1 (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('h1', attrlist, childnodes);
 }
 
-export function input (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function input (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('input', attrlist, childnodes);
 }
 
-export function label (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function label (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('label', attrlist, childnodes);
 }
 
-export function li (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function li (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('li', attrlist, childnodes);
 }
 
-export function span (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function span (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('span', attrlist, childnodes);
 }
 
-export function strong (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function strong (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('strong', attrlist, childnodes);
 }
 
@@ -213,13 +222,12 @@ export function text (text: string): Text {
   return document.createTextNode(text);
 }
 
-export function ul (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function ul (attrlist: string[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('ul', attrlist, childnodes);
 }
 
-export function route<T extends { hash?: string }> (model: T, title: string, hash: string): T {
-  window.history.pushState(model, title, hash);
-  return Object.assign({}, model, { hash: hash.replace('#', '') });
+export function route (url: string): void {
+  window.location.hash = url;
 }
 
 // Remove the module.exports section as it's not needed in TypeScript

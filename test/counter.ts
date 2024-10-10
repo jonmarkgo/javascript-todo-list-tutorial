@@ -37,8 +37,10 @@ function mount(model: Model, update: (action: Action, model: Model) => Model, vi
   function signal(action: Action): () => void {          // signal function takes action
     return function callback(): void {     // and returns callback
       model = update(action, model); // update model according to action
-      empty(root);
-      root.appendChild(view(model, signal)); // subsequent re-rendering
+      if (root) {
+        empty(root);
+        root.appendChild(view(model, signal)); // subsequent re-rendering
+      }
     };
   };
   root.appendChild(view(model, signal));    // render initial model (once)
