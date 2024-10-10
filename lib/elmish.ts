@@ -70,7 +70,7 @@ type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 * // returns node with attributes applied
 * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
 */
-function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
+export function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
   // console.log(attrlist, node);
   if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
     attrlist.forEach(function (attr) { // apply all props in array
@@ -129,15 +129,12 @@ function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: Mo
 }
 
 /**
- * `append_childnodes` appends an array of HTML elements to a parent DOM node.
- * @param  {Array.<Object>} childnodes array of child DOM nodes.
- * @param  {Object} parent the "parent" DOM node where children will be added.
- * @return {Object} returns parent DOM node with appended children
- * @example
- * // returns the parent node with the "children" appended
- * var parent = elmish.append_childnodes([div, p, section], parent);
+ * `append_childnodes` appends an array of child nodes to a parent node.
+ * @param {HTMLElement[]} childnodes - Array of child nodes to append.
+ * @param {HTMLElement} parent - Parent node to append children to.
+ * @returns {HTMLElement} The parent node with appended children.
  */
-function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTMLElement {
+export function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTMLElement {
   if(childnodes && Array.isArray(childnodes) && childnodes.length > 0) {
     childnodes.forEach(function (el) { parent.appendChild(el) });
   }
@@ -145,22 +142,19 @@ function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTM
 }
 
 /**
- * create_element is a "helper" function to "DRY" HTML element creation code
- * creat *any* element with attributes and childnodes.
- * @param {String} type of element to be created e.g: 'div', 'section'
- * @param {Array.<String>} attrlist list of attributes to be applied to the node
- * @param {Array.<Object>} childnodes array of child DOM nodes.
- * @return {Object} returns the <section> DOM node with appended children
- * @example
- * // returns the parent node with the "children" appended
- * var div = elmish.create_element('div', ["class=todoapp"], [h1, input]);
+ * `create_element` creates a new DOM element with attributes and child nodes.
+ * @param {string} type - The type of element to create.
+ * @param {(string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[]} attrlist - List of attributes or event handlers.
+ * @param {HTMLElement[]} childnodes - Array of child nodes to append.
+ * @returns {HTMLElement} The created element with attributes and children.
  */
-function create_element (type: string, attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function create_element (type: string, attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return append_childnodes(childnodes,
     add_attributes(attrlist, document.createElement(type))
   );
 }
 
+// Export functions for creating specific HTML elements
 export function section (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('section', attrlist, childnodes);
 }
@@ -209,17 +203,20 @@ export function strong (attrlist: (string | ((this: GlobalEventHandlers, ev: Mou
   return create_element('strong', attrlist, childnodes);
 }
 
-export function text (text: string): Text {
-  return document.createTextNode(text);
+export function text (str: string): Text {
+  return document.createTextNode(str);
 }
 
 export function ul (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
   return create_element('ul', attrlist, childnodes);
 }
 
-export function route<T extends { hash?: string }> (model: T, title: string, hash: string): T {
-  window.history.pushState(model, title, hash);
-  return Object.assign({}, model, { hash: hash.replace('#', '') });
+/**
+ * `route` sets up a hash change event listener for routing.
+ * @param {(route: string) => void} router - The router function to call on hash change.
+ */
+export function route (router: (route: string) => void): void {
+  window.onhashchange = function() {
+    router(window.location.hash);
+  };
 }
-
-// Remove the module.exports section as it's not needed in TypeScript

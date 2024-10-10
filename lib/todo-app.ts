@@ -3,13 +3,13 @@
 import { a, button, div, empty, footer, input, h1, header, label, li, mount,
   route, section, span, strong, text, ul } from './elmish';
 
-interface Todo {
+export interface Todo {
   id: number;
   title: string;
   done: boolean;
 }
 
-interface Model {
+export interface Model {
   todos: Todo[];
   hash: string;
   clicked?: number;
@@ -18,10 +18,14 @@ interface Model {
   all_done?: boolean;
 }
 
-const initial_model: Model = {
+export const initial_model: Model = {
   todos: [],
   hash: "#/"
 }
+
+export const model: Model = { ...initial_model };
+
+export { render_item, render_main, render_footer };
 
 /**
  * `update` transforms the `model` based on the `action`.
@@ -354,4 +358,4 @@ export function subscriptions (signal: Function): void {
   }
 }
 
-export { initial_model, render_item, render_main, render_footer };
+// Remove the conflicting export statement
