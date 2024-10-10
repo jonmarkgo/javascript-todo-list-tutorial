@@ -70,7 +70,7 @@ type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 * // returns node with attributes applied
 * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
 */
-function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
+export function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
   // console.log(attrlist, node);
   if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
     attrlist.forEach(function (attr) { // apply all props in array
@@ -209,8 +209,10 @@ export function strong (attrlist: (string | ((this: GlobalEventHandlers, ev: Mou
   return create_element('strong', attrlist, childnodes);
 }
 
-export function text (text: string): Text {
-  return document.createTextNode(text);
+export function text (text: string): HTMLElement {
+  const span = document.createElement('span');
+  span.textContent = text;
+  return span;
 }
 
 export function ul (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
