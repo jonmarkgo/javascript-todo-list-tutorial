@@ -1,11 +1,18 @@
-const test = require('tape');       // https://github.com/dwyl/learn-tape
-const fs = require('fs');           // to read html files (see below)
-const path = require('path');       // so we can open files cross-platform
+import test from 'tape';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const html = fs.readFileSync(path.resolve(__dirname, '../index.html'));
-require('jsdom-global')(html);      // https://github.com/rstacruz/jsdom-global
-const app = require('../lib/todo-app.js'); // functions to test
+import jsdomGlobal from 'jsdom-global';
+jsdomGlobal(html);
+import * as app from '../lib/todo-app.ts';
 const id = 'test-app';              // all tests use 'test-app' as root element
-const elmish = require('../lib/elmish.js'); // import "elmish" core functions
+import * as elmish from '../lib/elmish.ts'; // import "elmish" core functions
 
 test('`model` (Object) has desired keys', function (t) {
   const keys = Object.keys(app.model);
