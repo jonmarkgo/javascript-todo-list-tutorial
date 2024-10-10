@@ -11,6 +11,7 @@
   },
   "author": "@dwyl & friends!",
   "devDependencies": {
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^22.7.4",
     "@types/tape": "^5.6.4",
     "decache": "^4.6.0",

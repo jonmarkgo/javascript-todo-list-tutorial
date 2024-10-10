@@ -1,3 +1,8 @@
+export interface Model {
+  counters: number[];
+}
+
+export type Action = 'inc' | 'dec' | 'reset';
 /**
  * `empty` the contents of a given DOM element "node" (before re-rendering).
  * This is the *fastest* way according to: stackoverflow.com/a/3955238/1148249
@@ -70,7 +75,7 @@ type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 * // returns node with attributes applied
 * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
 */
-function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
+export function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
   // console.log(attrlist, node);
   if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
     attrlist.forEach(function (attr) { // apply all props in array
@@ -137,7 +142,7 @@ function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: Mo
  * // returns the parent node with the "children" appended
  * var parent = elmish.append_childnodes([div, p, section], parent);
  */
-function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTMLElement {
+export function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTMLElement {
   if(childnodes && Array.isArray(childnodes) && childnodes.length > 0) {
     childnodes.forEach(function (el) { parent.appendChild(el) });
   }
