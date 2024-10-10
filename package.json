@@ -2,9 +2,9 @@
   "name": "javascript-todo-list-tutorial",
   "description": "Learn how to build a Todo List in JavaScript following Test Driven Development TDD!",
   "version": "1.0.5",
+  "type": "module",
   "homepage": "https://github.com/dwyl/todomvc-vanilla-javascript-elm-architecture-example",
   "main": "index.html",
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/dwyl/todomvc-vanilla-javascript-elm-architecture-example.git"
@@ -24,15 +24,16 @@
     "tap-nyc": "^1.0.3",
     "tape": "^5.0.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "ts-node-dev": "^2.0.0"
   },
   "scripts": {
     "check-coverage": "nyc check-coverage --statements 100 --functions 100 --lines 100 --branches 100",
-    "postinstall": "npm test",
-    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
+    "test": "NODE_DEBUG=test node --loader ts-node/esm test/run-tests.ts | tap-nyc",
+    "retest": "PORT=8000 node_modules/.bin/nodemon --exec ts-node ./test/*.ts",
     "start": "node dist/lib/server.js",
-    "dev": "live-server",
-    "test": "NODE_OPTIONS='--experimental-vm-modules --experimental-specifier-resolution=node' nyc ts-node --esm ./test/setup.ts && ts-node --esm node_modules/tape/bin/tape ./lib/**/*.ts ./test/**/*.{js,ts} | tap-nyc"
+    "dev": "ts-node-dev --respawn --transpile-only lib/server.ts",
+    "build": "tsc"
   },
   "keywords": [
     "Todo List",
@@ -50,5 +51,10 @@
   "pre-commit": [
     "test",
     "check-coverage"
-  ]
+  ],
+  "ts-node": {
+    "experimentalSpecifierResolution": "node",
+    "esm": true,
+    "experimentalResolver": true
+  }
 }

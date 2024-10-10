@@ -7,7 +7,7 @@ const Inc = 'inc';                     // increment the counter
 const Dec = 'dec';                     // decrement the counter
 const Res = 'reset';                   // reset counter: git.io/v9KJk
 
-type Action = typeof Inc | typeof Dec | typeof Res;
+type Action = 'inc' | 'dec' | 'reset';
 type Model = number;
 
 function update(action: Action, model: Model): Model {     // Update function takes the current state
@@ -37,8 +37,8 @@ function mount(model: Model, update: (action: Action, model: Model) => Model, vi
   function signal(action: Action): () => void {          // signal function takes action
     return function callback(): void {     // and returns callback
       model = update(action, model); // update model according to action
-      empty(root);
-      root.appendChild(view(model, signal)); // subsequent re-rendering
+      empty(root!);
+      root!.appendChild(view(model, signal)); // subsequent re-rendering
     };
   };
   root.appendChild(view(model, signal));    // render initial model (once)
@@ -86,13 +86,12 @@ function container(elements: HTMLElement[]): HTMLElement {
 
 /* The code block below ONLY Applies to tests run using Node.js */
 /* istanbul ignore else */
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    view,
-    mount,
-    update,
-    div,
-    button,
-    empty,
-  }
-}
+// Export the functions for testing
+export {
+  view,
+  mount,
+  update,
+  div,
+  button,
+  empty,
+};
