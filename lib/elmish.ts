@@ -70,7 +70,7 @@ type SignalFunction<T> = (action: string, data?: any, model?: T) => () => void;
 * // returns node with attributes applied
 * input = add_attributes(["type=checkbox", "id=todo1", "checked=true"], input);
 */
-function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
+export function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], node: HTMLElement): HTMLElement {
   // console.log(attrlist, node);
   if(attrlist && Array.isArray(attrlist) &&  attrlist.length > 0) {
     attrlist.forEach(function (attr) { // apply all props in array
@@ -137,7 +137,7 @@ function add_attributes (attrlist: (string | ((this: GlobalEventHandlers, ev: Mo
  * // returns the parent node with the "children" appended
  * var parent = elmish.append_childnodes([div, p, section], parent);
  */
-function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTMLElement {
+export function append_childnodes (childnodes: (HTMLElement | Text)[], parent: HTMLElement): HTMLElement {
   if(childnodes && Array.isArray(childnodes) && childnodes.length > 0) {
     childnodes.forEach(function (el) { parent.appendChild(el) });
   }
@@ -155,57 +155,57 @@ function append_childnodes (childnodes: HTMLElement[], parent: HTMLElement): HTM
  * // returns the parent node with the "children" appended
  * var div = elmish.create_element('div', ["class=todoapp"], [h1, input]);
  */
-function create_element (type: string, attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+function create_element (type: string, attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return append_childnodes(childnodes,
     add_attributes(attrlist, document.createElement(type))
   );
 }
 
-export function section (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function section (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('section', attrlist, childnodes);
 }
 
-export function a (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function a (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('a', attrlist, childnodes);
 }
 
-export function button (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function button (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('button', attrlist, childnodes);
 }
 
-export function div (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function div (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('div', attrlist, childnodes);
 }
 
-export function footer (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function footer (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('footer', attrlist, childnodes);
 }
 
-export function header (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function header (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('header', attrlist, childnodes);
 }
 
-export function h1 (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function h1 (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('h1', attrlist, childnodes);
 }
 
-export function input (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function input (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('input', attrlist, childnodes);
 }
 
-export function label (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function label (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('label', attrlist, childnodes);
 }
 
-export function li (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function li (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('li', attrlist, childnodes);
 }
 
-export function span (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function span (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('span', attrlist, childnodes);
 }
 
-export function strong (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function strong (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('strong', attrlist, childnodes);
 }
 
@@ -213,7 +213,7 @@ export function text (text: string): Text {
   return document.createTextNode(text);
 }
 
-export function ul (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: HTMLElement[]): HTMLElement {
+export function ul (attrlist: (string | ((this: GlobalEventHandlers, ev: MouseEvent) => any))[], childnodes: (HTMLElement | Text)[]): HTMLElement {
   return create_element('ul', attrlist, childnodes);
 }
 
