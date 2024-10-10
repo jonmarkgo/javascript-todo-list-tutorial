@@ -33,14 +33,17 @@ function view(model: Model, signal: Signal): HTMLElement {
 // Mount Function receives all MUV and mounts the app in the "root" DOM Element
 function mount(model: Model, update: (action: Action, model: Model) => Model, view: (model: Model, signal: Signal) => HTMLElement, root_element_id: string): void {
   const root = document.getElementById(root_element_id); // root DOM element
-  if (!root) return;
+  if (!root) {
+    console.error(`Element with id "${root_element_id}" not found`);
+    return;
+  }
   function signal(action: Action): () => void {          // signal function takes action
     return function callback(): void {     // and returns callback
       model = update(action, model); // update model according to action
-      empty(root);
-      root.appendChild(view(model, signal)); // subsequent re-rendering
+      empty(root!); // Use non-null assertion
+      root!.appendChild(view(model, signal)); // Use non-null assertion
     };
-  };
+  }
   root.appendChild(view(model, signal));    // render initial model (once)
 }
 

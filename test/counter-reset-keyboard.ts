@@ -16,14 +16,14 @@ function update (action: Action, model: Model): Model {    // Update function ta
   }                                  // (default action always returns current)
 }
 
-type Signal = (action: Action) => () => void;
+type Signal = (action: Action) => (ev: MouseEvent | KeyboardEvent) => void;
 
 function view (model: Model, signal: Signal): HTMLElement {
   return div([], [
-    button(["class=inc", "id=inc", signal('inc')], [text('+')]), // increment
-    div(["class=count", "id=count"], [text(model.toString())]), // count
-    button(["class=dec", "id=dec", signal('dec')], [text('-')]), // decrement
-    button(["class=reset", "id=reset", signal('reset')], [text('Reset')])
+    button(["class=inc", "id=inc", signal('inc') as unknown as string], [text('+')]),
+    div(["class=count", "id=count"], [text(model.toString())]),
+    button(["class=dec", "id=dec", signal('dec') as unknown as string], [text('-')]),
+    button(["class=reset", "id=reset", signal('reset') as unknown as string], [text('Reset')])
   ]);
 }
 
@@ -34,10 +34,10 @@ function subscriptions (signal: Signal): void {
   document.addEventListener('keyup', function handler (e: KeyboardEvent) {
     switch (e.keyCode) {
       case UP_KEY:
-        signal('inc')(); // invoke the signal > callback function directly
+        signal('inc')(e);
         break;
       case DOWN_KEY:
-        signal('dec')();
+        signal('dec')(e);
         break;
     }
   });

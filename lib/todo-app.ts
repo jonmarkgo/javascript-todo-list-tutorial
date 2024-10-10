@@ -1,37 +1,15 @@
-/* if require fn is available, it means we are in Node.js Land i.e. testing! */
-/* istanbul ignore next */
+import { TodoAction, TodoModel, Todo, TodoUpdateFunction, TodoViewFunction, TodoSubscriptionsFunction } from './types';
 import { a, button, div, empty, footer, input, h1, header, label, li, mount,
   route, section, span, strong, text, ul } from './elmish';
 
-interface Todo {
-  id: number;
-  title: string;
-  done: boolean;
-}
-
-interface Model {
-  todos: Todo[];
-  hash: string;
-  clicked?: number;
-  click_time?: number;
-  editing?: number;
-  all_done?: boolean;
-}
-
-const initial_model: Model = {
+// Remove the 'export' keyword to avoid redeclaration
+const initial_model: TodoModel = {
   todos: [],
   hash: "#/"
 }
 
-/**
- * `update` transforms the `model` based on the `action`.
- * @param {String} action - the desired action to perform on the model.
- * @param {Model} model - the App's (current) model (or "state").
- * @param {any} data - the data we want to "apply" to the item.
- * @return {Model} new_model - the transformed model.
- */
-export function update(action: string, model: Model, data?: any): Model {
-  const new_model: Model = JSON.parse(JSON.stringify(model)) // "clone" the model
+export const update: TodoUpdateFunction = (action, model, data?) => {
+  const new_model: TodoModel = JSON.parse(JSON.stringify(model)) // "clone" the model
 
   switch(action) {
     case 'ADD':
@@ -111,32 +89,15 @@ export function update(action: string, model: Model, data?: any): Model {
       });
       break;
     case 'ROUTE':
-      new_model.hash = // (window && window.location && window.location.hash) ?
-        window.location.hash // : '#/';
+      new_model.hash = window.location.hash;
       break;
-    default: // if action unrecognised or undefined,
-      return model; // return model unmodified
-  }   // see: https://softwareengineering.stackexchange.com/a/201786/211301
+    default:
+      return model;
+  }
   return new_model;
 }
 
-/**
- * `render_item` creates an DOM "tree" with a single Todo List Item
- * using the "elmish" DOM functions (`li`, `div`, `input`, `label` and `button`)
- * returns an `<li>` HTML element with a nested `<div>` which in turn has the:
- * + `<input type=checkbox>` which lets users to "Toggle" the status of the item
- * + `<label>` which displays the Todo item text (`title`) in a `<text>` node
- * + `<button class="destroy">` lets people "delete" a todo item.
- * see: https://github.com/dwyl/learn-elm-architecture-in-javascript/issues/52
- * @param  {Todo} item the todo item object
- * @param {Model} model - the App's (current) model (or "state").
- * @param {Function} signal - the Elm Architecture "dispatcher" which will run
- * @return {Object} <li> DOM Tree which is nested in the <ul>.
- * @example
- * // returns <li> DOM element with <div>, <input>. <label> & <button> nested
- * var DOM = render_item({id: 1, title: "Build Todo List App", done: false});
- */
-function render_item (item: Todo, model: Model, signal: Function): HTMLElement {
+function render_item (item: Todo, model: TodoModel, signal: (action: TodoAction, data?: any) => void): HTMLElement {
   return (
     li([
       "data-id=" + item.id,
@@ -149,12 +110,12 @@ function render_item (item: Todo, model: Model, signal: Function): HTMLElement {
           item.done ? "checked=true" : "",
           "class=toggle",
           "type=checkbox",
-          typeof signal === 'function' ? signal('TOGGLE', item.id) : ''
-          ], []),
-        label([ typeof signal === 'function' ? signal('EDIT', item.id) : '' ],
+          "onclick=" + (() => signal('TOGGLE', item.id))
+        ], []),
+        label(["ondblclick=" + (() => signal('EDIT', item.id))],
           [text(item.title) as any as HTMLElement]),
         button(["class=destroy",
-          typeof signal === 'function' ? signal('DELETE', item.id) : ''], [])
+          "onclick=" + (() => signal('DELETE', item.id))], [])
         ]
       ),
     ].concat(model && model.editing && model.editing === item.id ? [
@@ -164,14 +125,7 @@ function render_item (item: Todo, model: Model, signal: Function): HTMLElement {
   )
 }
 
-/**
- * `render_main` renders the `<section class="main">` of the Todo List App
- * which contains all the "main" controls and the `<ul>` with the todo items.
- * @param {Model} model - the App's (current) model (or "state").
- * @param {Function} signal - the Elm Architecture "dispatcher" which will run
- * @return {Object} <section> DOM Tree which containing the todo list <ul>, etc.
- */
-function render_main (model: Model, signal: Function): HTMLElement {
+function render_main (model: TodoModel, signal: (action: TodoAction, data?: any) => void): HTMLElement {
   // Requirement #1 - No Todos, should hide #footer and #main
   const display = "style=display:"
     + (model.todos && model.todos.length > 0 ? "block" : "none");
@@ -179,7 +133,7 @@ function render_main (model: Model, signal: Function): HTMLElement {
   return (
     section(["class=main", "id=main", display], [
       input(["id=toggle-all", "type=checkbox",
-        typeof signal === 'function' ? signal('TOGGLE_ALL') : '',
+        "onclick=" + (() => signal('TOGGLE_ALL')),
         (model.all_done ? "checked=checked" : ""),
         "class=toggle-all"
       ], []),
@@ -205,19 +159,7 @@ function render_main (model: Model, signal: Function): HTMLElement {
   )
 }
 
-/**
- * `render_footer` renders the `<footer class="footer">` of the Todo List App
- * which contains count of items to (still) to be done and a `<ul>` "menu"
- * with links to filter which todo items appear in the list view.
- * @param {Model} model - the App's (current) model (or "state").
- * @param {Function} signal - the Elm Architecture "dispatcher" which will run
- * @return {Object} <section> DOM Tree which containing the <footer> element.
- * @example
- * // returns <footer> DOM element with other DOM elements nested:
- * var DOM = render_footer(model);
- */
-function render_footer (model: Model, signal: Function): HTMLElement {
-
+function render_footer (model: TodoModel, signal: (action: TodoAction, data?: any) => void): HTMLElement {
   // count how many "active" (not yet done) items by filtering done === false:
   const done = (model.todos && model.todos.length > 0) ?
     model.todos.filter( function (i) { return i.done; }).length : 0;
@@ -263,31 +205,18 @@ function render_footer (model: Model, signal: Function): HTMLElement {
         ])
       ]), // </ul>
       button(["class=clear-completed", "style=display:" + display_clear,
-        typeof signal === 'function' ? signal('CLEAR_COMPLETED') : ''
-        ],
-        [
-          text("Clear completed [") as any as HTMLElement,
-          text(done.toString()) as any as HTMLElement,
-          text("]") as any as HTMLElement
-        ]
-      )
+        "onclick=" + (() => signal('CLEAR_COMPLETED'))
+      ],
+      [
+        text("Clear completed [") as any as HTMLElement,
+        strong([], [text(done.toString()) as any as HTMLElement]),
+        text("]") as any as HTMLElement
+      ])
     ])
   )
 }
 
-/**
- * `view` renders the entire Todo List App
- * which contains count of items to (still) to be done and a `<ul>` "menu"
- * with links to filter which todo items appear in the list view.
- * @param {Model} model - the App's (current) model (or "state").
- * @param {Function} signal - the Elm Architecture "dispatcher" which will run
- * @return {Object} <section> DOM Tree which containing all other DOM elements.
- * @example
- * // returns <section class="todo-app"> DOM element with other DOM els nested:
- * var DOM = view(model);
- */
-export function view (model: Model, signal: Function): HTMLElement {
-
+export const view: TodoViewFunction = (model, signal) => {
   return (
     section(["class=todoapp"], [ // array of "child" elements
       header(["class=header"], [
@@ -299,11 +228,11 @@ export function view (model: Model, signal: Function): HTMLElement {
           "class=new-todo",
           "placeholder=What needs to be done?",
           "autofocus",
-          "onkeypress=" + signal('ADD', null, function(e: KeyboardEvent) {
+          "onkeypress=" + ((e: KeyboardEvent) => {
             if (e.key === 'Enter') {
               const input = e.target as HTMLInputElement;
               if (input.value.trim()) {
-                signal('ADD')(input.value.trim());
+                signal('ADD', input.value.trim());
                 input.value = '';
               }
             }
@@ -316,13 +245,7 @@ export function view (model: Model, signal: Function): HTMLElement {
   );
 }
 
-/**
- * `subscriptions` let us "listen" for events such as "key press" or "click".
- * and respond according to a pre-defined update/action.
- * @param {Function} signal - the Elm Architecture "dispatcher" which will run
- * both the "update" and "render" functions when invoked with signal(action)
- */
-export function subscriptions (signal: Function): void {
+export const subscriptions: TodoSubscriptionsFunction = (signal) => {
 	const ENTER_KEY = 13; // add a new todo item when [Enter] key is pressed
 	const ESCAPE_KEY = 27; // used for "escaping" when editing a Todo item
 
@@ -333,25 +256,25 @@ export function subscriptions (signal: Function): void {
       case ENTER_KEY:
         const editing = document.getElementsByClassName('editing');
         if (editing && editing.length > 0) {
-          signal('SAVE')(); // invoke signal inner callback
+          signal('SAVE');
         }
 
         const new_todo = document.getElementById('new-todo') as HTMLInputElement;
         if(new_todo.value.length > 0) {
-          signal('ADD')(); // invoke signal inner callback
+          signal('ADD');
           new_todo.value = ''; // reset <input> so we can add another todo
           document.getElementById('new-todo')!.focus();
         }
         break;
       case ESCAPE_KEY:
-        signal('CANCEL')();
+        signal('CANCEL');
         break;
     }
   });
 
   window.onhashchange = function route () {
-    signal('ROUTE')();
+    signal('ROUTE');
   }
 }
 
-export { initial_model, render_item, render_main, render_footer };
+export { render_item, render_main, render_footer, initial_model };

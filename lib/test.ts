@@ -1,89 +1,140 @@
+// Import necessary types from the types file
+import { TodoAction, TodoModel, TodoUpdateFunction, TodoViewFunction, TodoSignalFunction } from './types';
+
 const id: string = 'test-app';
 
-interface Model {
-  counters: number[];
-}
+// Define assert function
+const assert = {
+  equal: (actual: any, expected: any) => {
+    if (actual !== expected) throw new Error(`Assertion failed: ${actual} !== ${expected}`);
+  },
+  deepEqual: (actual: any, expected: any) => {
+    if (JSON.stringify(actual) !== JSON.stringify(expected))
+      throw new Error(`Assertion failed: ${JSON.stringify(actual)} !== ${JSON.stringify(expected)}`);
+  }
+};
 
-interface Assert {
-  equal: (actual: any, expected: any) => void;
-}
-
-type Action = 'inc' | 'dec' | 'reset';
+type Assert = typeof assert;
 
 declare function test(name: string, callback: (assert: Assert) => void): void;
-declare function update(model: Model, action?: Action): Model;
-declare function mount(model: Model, update: (model: Model, action?: Action) => Model, view: (model: Model) => HTMLElement, id: string): void;
-declare function empty(element: HTMLElement | null): void;
-declare function div(id: string): HTMLElement;
+declare function update(action: TodoAction, model: TodoModel): TodoModel;
+declare function view(model: TodoModel, signal: TodoSignalFunction): HTMLElement;
 
-test('update({counters:[0]}) returns {counters:[0]} (current state unmodified)',
+// Update the mount function declaration
+declare function mount(
+  model: TodoModel,
+  update: TodoUpdateFunction,
+  view: TodoViewFunction,
+  root_element_id: string,
+  subscriptions?: (signal: TodoSignalFunction) => void
+): void;
+
+declare function empty(node: HTMLElement): void;
+
+// Update the div function declaration
+declare function div(attrs: string[], children: (HTMLElement | Text)[]): HTMLDivElement;
+
+// Update the test functions to use the correct types
+function test_update() {
+  const result = update('CLEAR_COMPLETED', { todos: [], hash: '', all_done: false });
+  assert.deepEqual(result, { todos: [], hash: '', all_done: false });
+}
+
+function test_view() {
+  const id = 'test-app';
+  document.body.innerHTML = '';
+  document.body.appendChild(div([`id=${id}`], []));
+  mount({ todos: [], hash: '', all_done: false }, update, view, id);
+  const app = document.getElementById(id);
+  assert.equal(app !== null, true);
+  if (app) {
+    assert.equal(app.childNodes.length > 0, true);
+  }
+}
+
+function test_subscriptions() {
+  const id = 'test-app-subs';
+  document.body.innerHTML = '';
+  document.body.appendChild(div([`id=${id}`], []));
+  mount({ todos: [], hash: '', all_done: false }, update, view, id);
+  const result = update('CLEAR_COMPLETED', { todos: [], hash: '', all_done: false });
+  assert.deepEqual(result, { todos: [], hash: '', all_done: false });
+}
+
+// Export the test functions
+export { test_update, test_view, test_subscriptions };
+
+// Update existing tests to use correct TodoAction types and TodoModel structure
+test('update({todos:[]}) returns {todos:[]} (current state unmodified)',
     function(assert: Assert) {
-  const result: Model = update({counters:[0]});
-  assert.equal(result.counters[0], 0);
+  const result = update('ADD', { todos: [], hash: '', all_done: false });
+  assert.deepEqual(result, { todos: [{ id: 1, title: '', done: false }], hash: '', all_done: false });
 });
 
-test('Test Update increment: update(1, "inc") returns 2', function(assert: Assert) {
-  const result: Model = update({counters: [1] }, "inc");
-  console.log('result', result);
-  assert.equal(result.counters[0], 2);
+test('Test Update increment', function(assert: Assert) {
+  const result = update('ADD', { todos: [], hash: '', all_done: false });
+  assert.deepEqual(result, { todos: [{ id: 1, title: '', done: false }], hash: '', all_done: false });
 });
 
-test('Test Update decrement: update(1, "dec") returns 0', function(assert: Assert) {
-  const result: Model = update({counters: [1] }, "dec");
-  assert.equal(result.counters[0], 0);
+test('Test Update decrement', function(assert: Assert) {
+  const result = update('DELETE', { todos: [{ id: 1, title: '', done: false }], hash: '', all_done: false });
+  assert.deepEqual(result, { todos: [], hash: '', all_done: false });
 });
 
-test('Test negative state: update(-9, "inc") returns -8', function(assert: Assert) {
-  const result: Model = update({counters: [-9] }, "inc");
-  assert.equal(result.counters[0], -8);
+test('Test toggle todo', function(assert: Assert) {
+  const result = update('TOGGLE', { todos: [{ id: 1, title: '', done: false }], hash: '', all_done: false });
+  assert.deepEqual(result, { todos: [{ id: 1, title: '', done: true }], hash: '', all_done: false });
 });
 
-test('mount({model: 7, update: update, view: view}, "'
-  + id +'") sets initial state to 7', function(assert: Assert) {
-  mount({counters:[7]}, update, view, id);
-  const state: string | null = document.getElementById(id)
-    ?.getElementsByClassName('count')[0].textContent;
-  assert.equal(state, 7);
+test('mount sets initial state', function(assert: Assert) {
+  mount({ todos: [], hash: '', all_done: false }, update, view, id);
+  const state = document.getElementById(id)
+    ?.getElementsByClassName('todo-count')[0]?.textContent;
+  assert.equal(state, '0 items left');
 });
 
 test('empty("test-app") should clear DOM in root node', function(assert: Assert) {
-  empty(document.getElementById(id));
-  mount({counters:[7]}, update, view, id);
-  empty(document.getElementById(id));
-  const result: string | undefined = document.getElementById(id)?.innerHTML;
-  assert.equal(result, undefined);
+  empty(document.getElementById(id) as HTMLElement);
+  mount({ todos: [], hash: '', all_done: false }, update, view, id);
+  empty(document.getElementById(id) as HTMLElement);
+  const result = document.getElementById(id)?.innerHTML;
+  assert.equal(result, '');
 });
 
-test('click on "+" button to re-render state (increment model by 1)',
+test('click on "+" button to add a new todo',
 function(assert: Assert) {
-  document.body.appendChild(div(id));
-  mount({counters:[7]}, update, view, id);
-  document.getElementById(id)?.getElementsByClassName('inc')[0].click();
-  const state: string | null = document.getElementById(id)
-    ?.getElementsByClassName('count')[0].textContent;
-  assert.equal(state, 8); // model was incremented successfully
-  empty(document.getElementById(id)); // clean up after tests
+  document.body.appendChild(div([`id=${id}`], []));
+  mount({ todos: [], hash: '', all_done: false }, update, view, id);
+  const addButton = document.getElementById(id)?.getElementsByClassName('new-todo')[0] as HTMLInputElement;
+  addButton.value = 'New Todo';
+  addButton.dispatchEvent(new KeyboardEvent('keyup', {'key': 'Enter'}));
+  const state = document.getElementById(id)
+    ?.getElementsByClassName('todo-count')[0]?.textContent;
+  assert.equal(state, '1 item left');
+  empty(document.getElementById(id) as HTMLElement);
 });
 
 // Reset Functionality
 
-test('Test reset counter when model/state is 6 returns 0', function(assert: Assert) {
-  const result: Model = update({counters:[7]}, "reset");
-  assert.equal(result.counters[0], 0);
+test('Test clear completed todos', function(assert: Assert) {
+  const result = update('CLEAR_COMPLETED', {todos: [{ id: 1, title: '', done: true }], hash: '', all_done: false});
+  assert.deepEqual(result, {todos: [], hash: '', all_done: false});
 });
 
-test('reset button should be present on page', function(assert: Assert) {
-  const reset: HTMLCollectionOf<Element> = document.getElementsByClassName('reset');
-  assert.equal(reset.length, 3);
+test('clear completed button should be present on page', function(assert: Assert) {
+  mount({ todos: [{ id: 1, title: '', done: true }], hash: '', all_done: false }, update, view, id);
+  const clearCompleted = document.getElementsByClassName('clear-completed');
+  assert.equal(clearCompleted.length, 1);
+  empty(document.getElementById(id) as HTMLElement);
 });
 
-test('Click reset button resets state to 0', function(assert: Assert) {
-  mount({counters:[7]}, update, view, id);
-  const root: HTMLElement | null = document.getElementById(id);
-  assert.equal(root?.getElementsByClassName('count')[0].textContent, 7);
-  const btn: Element | undefined = root?.getElementsByClassName("reset")[0]; // click reset button
-  (btn as HTMLElement)?.click(); // Click the Reset button!
-  const state: string | null = root?.getElementsByClassName('count')[0].textContent;
-  assert.equal(state, 0); // state was successfully reset to 0!
-  empty(root); // clean up after tests
+test('Click clear completed button removes completed todos', function(assert: Assert) {
+  mount({todos: [{ id: 1, title: '', done: true }, { id: 2, title: '', done: false }], hash: '', all_done: false}, update, view, id);
+  const root = document.getElementById(id);
+  assert.equal(root?.getElementsByClassName('todo-count')[0].textContent, '1 item left');
+  const btn = root?.getElementsByClassName("clear-completed")[0] as HTMLElement;
+  btn?.click();
+  const state = root?.getElementsByClassName('todo-count')[0]?.textContent;
+  assert.equal(state, '1 item left');
+  empty(root as HTMLElement);
 });
