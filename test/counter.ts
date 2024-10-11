@@ -38,9 +38,11 @@ function mount(model: Model, update: (action: Action, model: Model) => Model, vi
     return function callback(): void {     // and returns callback
       model = update(action, model); // update model according to action
       empty(root);
-      root.appendChild(view(model, signal)); // subsequent re-rendering
+      if (root) {
+        root.appendChild(view(model, signal)); // subsequent re-rendering
+      }
     };
-  };
+  }
   root.appendChild(view(model, signal));    // render initial model (once)
 }
 
@@ -48,9 +50,11 @@ function mount(model: Model, update: (action: Action, model: Model) => Model, vi
 // used in the "View" function to render the Model (State) to the Browser DOM:
 
 // empty the contents of a given DOM element "node" (before re-rendering)
-function empty(node: HTMLElement): void {
-  while (node.firstChild) {
-    node.removeChild(node.firstChild);
+function empty(node: HTMLElement | null): void {
+  if (node) {
+    while (node.firstChild) {
+      node.removeChild(node.firstChild);
+    }
   }
 } // Inspired by: stackoverflow.com/a/3955238/1148249
 
