@@ -4,28 +4,52 @@
   "version": "1.0.5",
   "homepage": "https://github.com/dwyl/todomvc-vanilla-javascript-elm-architecture-example",
   "main": "index.html",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/dwyl/todomvc-vanilla-javascript-elm-architecture-example.git"
   },
   "author": "@dwyl & friends!",
   "devDependencies": {
+    "@types/esm": "^3.2.2",
+    "@types/glob": "^8.1.0",
+    "@types/jsdom": "^21.1.7",
+    "@types/jsdom-global": "^3.0.7",
+    "@types/node": "^22.7.5",
+    "@types/tape": "^5.6.4",
+    "c8": "^10.1.2",
     "decache": "^4.6.0",
+    "esm": "^3.2.25",
+    "globby": "^13.1.3",
+    "http-server": "^14.1.1",
     "jsdom": "^25.0.0",
     "jsdom-global": "^3.0.2",
-    "live-server": "^1.1.0",
-    "nyc": "^17.0.0",
     "pre-commit": "^1.2.2",
-    "tap-nyc": "^1.0.3",
-    "tape": "^5.0.1"
+    "tape": "^5.0.1",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.6.3"
   },
   "scripts": {
-    "check-coverage": "nyc check-coverage --statements 100 --functions 100 --lines 100 --branches 100",
-    "postinstall": "npm test",
-    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
-    "start": "node lib/server.js",
-    "dev": "live-server",
-    "test": "nyc tape ./test/*.test.js | tap-nyc"
+    "build": "tsc && cp src/*.css dist/ && cp src/*.html dist/ && cp src/favicon.ico dist/ && cp src/index.html dist/",
+    "check-coverage": "c8 npm run test",
+    "retest": "node --loader ts-node/esm --experimental-specifier-resolution=node test/*.test.ts",
+    "start": "npm run build && node dist/lib/server.js",
+    "dev": "ts-node-esm src/server.ts",
+    "test": "npm run test:todo-app && npm run test:elmish && npm run test:counter && npm run test:counter-reset-keyboard",
+    "test:todo-app": "node --loader ts-node/esm --experimental-specifier-resolution=node test/todo-app.test.ts --verbose | tap-spec",
+    "test:elmish": "node --loader ts-node/esm --experimental-specifier-resolution=node test/elmish.test.ts --verbose | tap-spec",
+    "test:counter": "node --loader ts-node/esm --experimental-specifier-resolution=node test/counter.test.ts --verbose | tap-spec",
+    "test:counter-reset-keyboard": "node --loader ts-node/esm --experimental-specifier-resolution=node test/counter-reset-keyboard.test.ts --verbose | tap-spec",
+    "test:all": "node --loader ts-node/esm --experimental-specifier-resolution=node test/*.test.ts --verbose | tap-spec",
+    "start:js": "node dist/server.js"
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node",
+    "compilerOptions": {
+      "module": "ES2020"
+    }
   },
   "keywords": [
     "Todo List",
@@ -43,5 +67,16 @@
   "pre-commit": [
     "test",
     "check-coverage"
-  ]
+  ],
+  "dependencies": {
+    "anymatch": "^3.1.3",
+    "braces": "^3.0.3",
+    "chokidar": "^4.0.1",
+    "glob": "^11.0.0",
+    "meow": "13.2.0",
+    "micromatch": "^4.0.8",
+    "readdirp": "^4.0.2",
+    "tap-spec": "^2.2.2",
+    "trim-newlines": "5.0.0"
+  }
 }

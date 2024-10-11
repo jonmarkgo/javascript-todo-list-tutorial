@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en-GB" data-framework="javascript">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport"
+  content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>TodoMVC Todo List Example in VanillaJS!</title>
+  <link rel="shortcut icon"
+  href="lib/favicon.ico" type="image/x-icon">
+</head>
+<body>
+  <div id="app"></div>
+  <!-- CSS Styles are 100% optional. but they make it look *much* nicer -->
+  <link rel="stylesheet" href="lib/todomvc-common-base.css">
+  <link rel="stylesheet" href="lib/todomvc-app.css">
+  <script type="module" src="dist/lib/elmish.js"></script>
+  <script type="module" src="dist/lib/todo-app.js"></script>
+  <script type="module" src="dist/lib/init.js"></script>
+
+  <!-- Below this point is all related to the Tests for the App -->
+  <div id="test-app"></div> <!-- Create a test-app div to mount the app -->
+</body>
+</html>
