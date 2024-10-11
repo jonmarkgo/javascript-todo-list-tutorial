@@ -151,7 +151,28 @@ Install the `devDependencies` so you can run the tests:
 cd javascript-todo-list-tutorial && npm install
 ```
 
-Now you have _everything_ you need to build a Todo List from scratch!
+### TypeScript Version
+
+This project has been migrated to TypeScript. To compile and run the TypeScript version:
+
+1. Install the dependencies:
+   ```sh
+   npm install
+   ```
+
+2. Compile the TypeScript files:
+   ```sh
+   npx tsc
+   ```
+
+3. Run the server:
+   ```sh
+   node dist/lib/server.js
+   ```
+
+4. Open your browser and navigate to `http://localhost:8000` to use the Todo List app.
+
+Now you have _everything_ you need to build and run a Todo List from scratch in TypeScript!
 
 
 ### `Elm`(_ish_) ?

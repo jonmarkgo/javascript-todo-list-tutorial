@@ -54,3 +54,9 @@ typings/
 
 # next.js build output
 .next
+
+# dist directory
+dist
+
+# test output file
+test_output.txt
