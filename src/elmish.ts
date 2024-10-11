@@ -21,7 +21,7 @@ export function empty (node: HTMLElement): void {
  * @param {String} root_element_id root DOM element in which the app is mounted
  * @param {Function} subscriptions any event listeners the application needs
  */
-export function mount<T> (
+export function mount<T extends object> (
   model: T,
   update: (action: string, model: T, data?: any) => T,
   view: (model: T, signal: SignalFunction<T>) => HTMLElement,
@@ -32,7 +32,10 @@ export function mount<T> (
   if (!ROOT) throw new Error(`Element with id ${root_element_id} not found`);
   const store_name = 'todos-elmish_' + root_element_id; // test-app !== app
 
+  console.log('Debug: Mount function called with initial model:', JSON.stringify(model, null, 2));
+
   function render (mod: T, sig: SignalFunction<T>, root: HTMLElement): void {
+    console.log('Debug: Render function called with model:', JSON.stringify(mod, null, 2));
     localStorage.setItem(store_name, JSON.stringify(mod)); // save the model!
     empty(root); // clear root element (container) before (re)rendering
     root.appendChild(view(mod, sig)) // render view based on model & signal
@@ -40,15 +43,22 @@ export function mount<T> (
 
   function signal(action: string, data?: any, model?: T): () => void {
     return function callback(): void {
+      console.log('Debug: Signal callback called for action:', action);
       model = JSON.parse(localStorage.getItem(store_name) || '{}') as T;
+      console.log('Debug: Model loaded from localStorage:', JSON.stringify(model, null, 2));
       const updatedModel = update(action, model, data); // update model for action
+      console.log('Debug: Updated model after action:', JSON.stringify(updatedModel, null, 2));
       if (ROOT) {
         render(updatedModel, signal, ROOT);
       }
     };
   }
 
-  model = JSON.parse(localStorage.getItem(store_name) || '{}') as T || model;
+  console.log('Debug: Attempting to load model from localStorage');
+  const storedModel = JSON.parse(localStorage.getItem(store_name) || '{}') as T;
+  model = Object.keys(storedModel).length > 0 ? storedModel : model;
+  console.log('Debug: Model after loading from localStorage:', JSON.stringify(model, null, 2));
+
   if (ROOT) {
     render(model, signal, ROOT);
   }

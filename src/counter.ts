@@ -7,21 +7,21 @@ const Inc = 'inc';                     // increment the counter
 const Dec = 'dec';                     // decrement the counter
 const Res = 'reset';                   // reset counter: git.io/v9KJk
 
-type Action = typeof Inc | typeof Dec | typeof Res;
-type Model = number;
+type CounterAction = typeof Inc | typeof Dec | typeof Res;
+type CounterModel = number;
 
-function update(action: Action, model: Model): Model {     // Update function takes the current state
+export function update(action: CounterAction, model: CounterModel): CounterModel {     // Update function takes the current state
   switch(action) {                   // and an action (String) runs a switch
     case Inc: return model + 1;      // add 1 to the model
-    case Dec: return model - 1;      // subtract 1 from model
+    case Dec: return model > 0 ? model - 1 : 0;      // subtract 1 from model, but not below 0
     case Res: return 0;              // reset state to 0 (Zero) git.io/v9KJk
     default: return model;           // if no action, return curent state.
   }                                  // (default action always returns current)
 }
 
-type Signal = (action: Action) => () => void;
+type Signal = (action: CounterAction) => () => void;
 
-function view(model: Model, signal: Signal): HTMLElement {
+export function view(model: CounterModel, signal: Signal): HTMLElement {
   return container([                           // Store DOM nodes in an array
     button('+', signal, Inc),                  // then iterate to append them
     div('count', model.toString()),            // create div with stat as text
@@ -31,14 +31,16 @@ function view(model: Model, signal: Signal): HTMLElement {
 } // yes, for loop is "faster" than forEach, but readability trumps "perf" here!
 
 // Mount Function receives all MUV and mounts the app in the "root" DOM Element
-function mount(model: Model, update: (action: Action, model: Model) => Model, view: (model: Model, signal: Signal) => HTMLElement, root_element_id: string): void {
+export function mount(model: CounterModel, update: (action: CounterAction, model: CounterModel) => CounterModel, view: (model: CounterModel, signal: Signal) => HTMLElement, root_element_id: string): void {
   const root = document.getElementById(root_element_id); // root DOM element
   if (!root) return;
-  function signal(action: Action): () => void {          // signal function takes action
+  function signal(action: CounterAction): () => void {          // signal function takes action
     return function callback(): void {     // and returns callback
       model = update(action, model); // update model according to action
-      empty(root);
-      root.appendChild(view(model, signal)); // subsequent re-rendering
+      if (root) {
+        empty(root);
+        root.appendChild(view(model, signal)); // subsequent re-rendering
+      }
     };
   };
   root.appendChild(view(model, signal));    // render initial model (once)
@@ -48,13 +50,13 @@ function mount(model: Model, update: (action: Action, model: Model) => Model, vi
 // used in the "View" function to render the Model (State) to the Browser DOM:
 
 // empty the contents of a given DOM element "node" (before re-rendering)
-function empty(node: HTMLElement): void {
+export function empty(node: HTMLElement): void {
   while (node.firstChild) {
     node.removeChild(node.firstChild);
   }
 } // Inspired by: stackoverflow.com/a/3955238/1148249
 
-function button(text: string, signal: Signal, action: Action): HTMLButtonElement {
+export function button(text: string, signal: Signal, action: CounterAction): HTMLButtonElement {
   const button = document.createElement('button');
   const textNode = document.createTextNode(text);    // human-readable button text
   button.appendChild(textNode);                    // text goes *inside* not attrib
@@ -65,7 +67,7 @@ function button(text: string, signal: Signal, action: Action): HTMLButtonElement
   return button;                               // return the DOM node(s)
 } // how to create a button in JavaScript: stackoverflow.com/a/8650996/1148249
 
-function div(divid: string, text?: string): HTMLDivElement {
+export function div(divid: string, text?: string): HTMLDivElement {
   const div = document.createElement('div');
   div.id = divid;
   div.className = divid;
@@ -77,22 +79,9 @@ function div(divid: string, text?: string): HTMLDivElement {
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/section
-function container(elements: HTMLElement[]): HTMLElement {
+export function container(elements: HTMLElement[]): HTMLElement {
   const con = document.createElement('section');
   con.className = 'counter';
   elements.forEach((el) => { con.appendChild(el) });
   return con;
-}
-
-/* The code block below ONLY Applies to tests run using Node.js */
-/* istanbul ignore else */
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    view,
-    mount,
-    update,
-    div,
-    button,
-    empty,
-  }
 }

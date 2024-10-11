@@ -3,7 +3,7 @@ import * as elmish from '../src/elmish';
 import { update, view } from '../src/todo-app';
 import { JSDOM } from 'jsdom';
 
-console.log('Debug: Starting todo-app.test.ts');
+console.log('Debug: Starting minimal-import.test.ts');
 
 const dom = new JSDOM('<!DOCTYPE html><div id="app"></div>');
 (global as any).document = dom.window.document;
@@ -24,12 +24,10 @@ console.log('Debug: Mock localStorage set up');
 
 const id = 'test-app';
 
-interface TodoModel {
+export interface TodoModel {
   todos: Array<{ id: number; title: string; done: boolean }>;
   hash: string;
 }
-
-console.log('Debug: Starting tests');
 
 test('Initial model structure', (t: any) => {
   console.log('Debug: Running test - Initial model structure');
@@ -71,24 +69,47 @@ test('view function returns valid HTML structure', (t: any) => {
   t.end();
 });
 
-test('elmish.mount function is called with correct parameters', (t: any) => {
-  console.log('Debug: Running test - elmish.mount function is called with correct parameters');
+test('ADD action adds a new todo item', (t: any) => {
+  console.log('Debug: Running test - ADD action adds a new todo item');
   t.plan(2);
+  const initialModel: TodoModel = { todos: [], hash: '#/' };
+  const newTodo = 'Learn TDD';
+  const updatedModel = update('ADD', initialModel, newTodo);
 
-  // Create a mock elmish object with a mount function we can spy on
-  const mockElmish = {
-    mount: (model: any, update: any, view: any, root_element_id: string, subscriptions?: any) => {
-      t.equal(root_element_id, id, 'mount is called with correct root_element_id');
-      t.pass('mount function was called');
-    }
+  t.equal(updatedModel.todos.length, 1, 'A new todo item is added');
+  t.equal(updatedModel.todos[0].title, newTodo, 'The new todo has the correct title');
+  console.log('Debug: Test completed');
+  t.end();
+});
+
+test('TOGGLE action toggles the done status of a todo item', (t: any) => {
+  console.log('Debug: Running test - TOGGLE action toggles the done status of a todo item');
+  t.plan(2);
+  const initialModel: TodoModel = {
+    todos: [{ id: 1, title: 'Learn Elm Architecture', done: false }],
+    hash: '#/'
   };
+  const updatedModel = update('TOGGLE', initialModel, 1);
 
-  // Define a sample model for testing
-  const sampleModel: TodoModel = { todos: [], hash: '#/' };
+  t.true(updatedModel.todos[0].done, 'Todo item is marked as done');
+  t.equal(updatedModel.todos[0].title, 'Learn Elm Architecture', 'Todo item title remains unchanged');
+  console.log('Debug: Test completed');
+  t.end();
+});
 
-  // Call the mock mount function
-  mockElmish.mount(sampleModel, update, view, id);
+test('DELETE action removes a todo item', (t: any) => {
+  console.log('Debug: Running test - DELETE action removes a todo item');
+  t.plan(1);
+  const initialModel: TodoModel = {
+    todos: [
+      { id: 1, title: 'Learn Elm Architecture', done: false },
+      { id: 2, title: 'Build Todo App', done: false }
+    ],
+    hash: '#/'
+  };
+  const updatedModel = update('DELETE', initialModel, 1);
 
+  t.equal(updatedModel.todos.length, 1, 'One todo item is removed');
   console.log('Debug: Test completed');
   t.end();
 });
