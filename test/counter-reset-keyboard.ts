@@ -2,10 +2,18 @@
 // https://github.com/dwyl/learn-elm-architecture-in-javascript/blob/master/examples/counter-reset-keyboard/counter.js
 // it is included here purely for testing the "elmish" functions.
 
-import { button, div, empty, mount, text } from '../lib/elmish.js';
+import { button, div, empty, mount, text, span } from '../lib/elmish.js';
 
 type Model = number;
 type Action = 'inc' | 'dec' | 'reset';
+type Signal = (action: Action) => () => void;
+
+// Helper function to wrap Text nodes in span elements
+function wrapTextInSpan(content: string | number): HTMLElement {
+  const spanElement = span([], []);
+  spanElement.textContent = content.toString();
+  return spanElement;
+}
 
 function update (action: Action, model: Model): Model {    // Update function takes the current state
   switch(action) {                   // and an action (String) runs a switch
@@ -16,14 +24,12 @@ function update (action: Action, model: Model): Model {    // Update function ta
   }                                  // (default action always returns current)
 }
 
-type Signal = (action: Action) => () => void;
-
 function view (model: Model, signal: Signal): HTMLElement {
   return div([], [
-    button(["class=inc", "id=inc", signal('inc')], [text('+')]), // increment
-    div(["class=count", "id=count"], [text(model.toString())]), // count
-    button(["class=dec", "id=dec", signal('dec')], [text('-')]), // decrement
-    button(["class=reset", "id=reset", signal('reset')], [text('Reset')])
+    button(["class=inc", "id=inc", signal('inc')], [wrapTextInSpan('+')]),
+    div(["class=count", "id=count"], [wrapTextInSpan(model)]),
+    button(["class=dec", "id=dec", signal('dec')], [wrapTextInSpan('-')]),
+    button(["class=reset", "id=reset", signal('reset')], [wrapTextInSpan('Reset')])
   ]);
 }
 

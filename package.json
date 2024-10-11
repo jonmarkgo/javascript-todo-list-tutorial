@@ -11,26 +11,33 @@
   },
   "author": "@dwyl & friends!",
   "devDependencies": {
+    "@swc/core": "^1.7.35",
+    "@types/jsdom": "^21.1.7",
+    "@types/jsdom-global": "^3.0.7",
     "@types/node": "^22.7.4",
     "@types/tape": "^5.6.4",
     "decache": "^4.6.0",
-    "jsdom": "^25.0.0",
+    "jsdom": "^25.0.1",
     "jsdom-global": "^3.0.2",
     "live-server": "^1.1.0",
     "nyc": "^17.0.0",
     "pre-commit": "^1.2.2",
     "tap-nyc": "^1.0.3",
-    "tape": "^5.0.1",
+    "tap-spec": "^5.0.0",
+    "tape": "^5.9.0",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.6.2"
   },
   "scripts": {
     "check-coverage": "nyc check-coverage --statements 100 --functions 100 --lines 100 --branches 100",
-    "postinstall": "npm test",
-    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.js",
-    "start": "node dist/lib/server.js",
+    "retest": "PORT=8000 node_modules/.bin/nodemon ./test/*.ts",
+    "start": "npm run build && node dist/lib/server.js",
     "dev": "live-server",
-    "test": "nyc tape ./test/*.test.js | tap-nyc"
+    "build": "tsc",
+    "test": "npm run build && node --experimental-vm-modules --experimental-specifier-resolution=node dist/test/elmish.test.js | tap-spec",
+    "test:js": "node --experimental-vm-modules --experimental-specifier-resolution=node dist/test/elmish.test.js | tap-spec",
+    "test:ts": "ts-node --esm --experimental-specifier-resolution=node test/elmish.test.ts | tap-spec"
   },
   "keywords": [
     "Todo List",
@@ -48,5 +55,29 @@
   "pre-commit": [
     "test",
     "check-coverage"
-  ]
+  ],
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  },
+  "tape": {
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "nyc": {
+    "extension": [
+      ".ts"
+    ],
+    "exclude": [
+      "**/*.d.ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "dependencies": {
+    "@types/glob": "^8.1.0",
+    "glob": "^11.0.0"
+  }
 }
